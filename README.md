@@ -215,7 +215,7 @@ parivesh-3.0/
 
 ```bash
 # Clone the repository
-git clone https://github.com/Rishit2467/Parivesh_3.0_unified_portal.git
+git clone https://github.com/sumitdewangan2006-web/Parivesh_3.0_unified_portal
 cd Parivesh_3.0_unified_portal
 
 # Start all services (demo mode: Docker enables AUTO_SYNC and SEED_DEMO_DATA explicitly)
