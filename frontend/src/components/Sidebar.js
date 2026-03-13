@@ -6,7 +6,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import LogoSlot from "./LogoSlot";
 import PortalBrandMark from "./PortalBrandMark";
 
 // Navigation items per role
@@ -84,10 +83,6 @@ export default function Sidebar({ isOpen, onClose }) {
           >
             ✕
           </button>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <LogoSlot title="GoI" subtitle="Asset Slot" shortLabel="GOI" variant="dark" className="min-w-[104px]" />
-            <LogoSlot title="NIC" subtitle="Asset Slot" shortLabel="NIC" variant="dark" className="min-w-[104px]" />
           </div>
         </div>
 

@@ -4,7 +4,6 @@
 // Shows app title, user info, and logout button
 
 import { useAuth } from "@/contexts/AuthContext";
-import LogoSlot from "./LogoSlot";
 import PortalBrandMark from "./PortalBrandMark";
 
 const roleBadgeColor = {
@@ -59,8 +58,6 @@ export default function Navbar({ onToggleSidebar }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 xl:justify-end">
-            <LogoSlot title="GoI" subtitle="Identity Slot" shortLabel="GOI" className="hidden lg:inline-flex" />
-            <LogoSlot title="MoEFCC" subtitle="Department Slot" shortLabel="ENV" className="hidden xl:inline-flex" />
             <span className={`badge ${roleBadgeColor[roleName] || "bg-gray-100 text-gray-700"}`}>
               {roleLabel[roleName] || roleName}
             </span>

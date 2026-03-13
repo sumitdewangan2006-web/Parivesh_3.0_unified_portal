@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import LogoSlot from "./LogoSlot";
-import PortalBrandMark from "./PortalBrandMark";
 import { usePortalUi } from "@/contexts/PortalUiContext";
 
 export default function PortalFooter() {
@@ -29,12 +27,6 @@ export default function PortalFooter() {
             <p className="max-w-3xl text-sm leading-6 text-[var(--portal-muted)]">
               {t("footer.description")}
             </p>
-            <div className="flex flex-wrap gap-3">
-              <LogoSlot title="GoI" subtitle={t("footer.stateEmblemSlot")} shortLabel="GOI" />
-              <LogoSlot title="MoEFCC" subtitle={t("footer.officialDepartmentAsset")} shortLabel="ENV" />
-              <LogoSlot title="NIC" subtitle={t("footer.hostingPartnerSlot")} shortLabel="NIC" />
-              <PortalBrandMark subtitle={t("footer.officialPortalMark")} />
-            </div>
           </div>
 
           <div className="space-y-5 rounded-[28px] border border-[var(--portal-border)] bg-white/80 p-6 shadow-sm backdrop-blur">

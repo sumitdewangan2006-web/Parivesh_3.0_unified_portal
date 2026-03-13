@@ -40,15 +40,11 @@ const translations = {
       accessibility: "Accessibility",
       disclaimer: "Disclaimer",
       note:
-        "PARIVESH portal is designed for demonstration of a government-style workflow experience. Official logos are intentionally represented as replaceable identity slots and should be swapped with authorized assets only.",
+        "PARIVESH portal is designed for demonstration of a government-style workflow experience.",
       context:
         "Content context: Ministry of Environment, Forest and Climate Change, Government of India.",
       implementation:
         "Interface and workflow implementation in this workspace are developed for the hackathon portal.",
-      stateEmblemSlot: "State Emblem Slot",
-      officialDepartmentAsset: "Official Department Asset",
-      hostingPartnerSlot: "Hosting Partner Slot",
-      officialPortalMark: "Official portal mark",
     },
     home: {
       kicker: "Single Window Green Clearance Platform",
@@ -158,15 +154,11 @@ const translations = {
       accessibility: "सुगम्यता",
       disclaimer: "अस्वीकरण",
       note:
-        "परिवेश पोर्टल को सरकारी शैली के कार्यप्रवाह अनुभव के प्रदर्शन के लिए तैयार किया गया है। आधिकारिक लोगो को जानबूझकर परिवर्तनीय पहचान स्लॉट के रूप में दिखाया गया है और उन्हें केवल अधिकृत परिसंपत्तियों से बदला जाना चाहिए।",
+        "परिवेश पोर्टल को सरकारी शैली के कार्यप्रवाह अनुभव के प्रदर्शन के लिए तैयार किया गया है।",
       context:
         "संदर्भ सामग्री: पर्यावरण, वन और जलवायु परिवर्तन मंत्रालय, भारत सरकार।",
       implementation:
         "इस वर्कस्पेस में इंटरफेस और कार्यप्रवाह कार्यान्वयन हैकाथॉन पोर्टल के लिए विकसित किए गए हैं।",
-      stateEmblemSlot: "राज्य चिह्न स्लॉट",
-      officialDepartmentAsset: "आधिकारिक विभागीय एसेट",
-      hostingPartnerSlot: "होस्टिंग पार्टनर स्लॉट",
-      officialPortalMark: "आधिकारिक पोर्टल चिह्न",
     },
     home: {
       kicker: "एकल विंडो हरित स्वीकृति मंच",
