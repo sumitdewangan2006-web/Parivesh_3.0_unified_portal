@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: parivesh_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: parivesh_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-parivesh_secure_2024}
+      POSTGRES_DB: parivesh_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parivesh_admin -d parivesh_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parivesh_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      AUTO_SYNC: "true"
+      SEED_DEMO_DATA: "true"
+      PORT: 5000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: parivesh_db
+      DB_USER: parivesh_admin
+      DB_PASSWORD: ${DB_PASSWORD:-parivesh_secure_2024}
+      JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
+      JWT_EXPIRY: 24h
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Frontend Next.js App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: parivesh_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  uploads:

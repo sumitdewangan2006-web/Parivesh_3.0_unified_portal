@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Global Styles ────────────────────────────────────────────────── */
+
+:root {
+  --portal-canvas: #f7f4ec;
+  --portal-panel: rgba(255, 255, 255, 0.88);
+  --portal-soft: #f0ece0;
+  --portal-soft-green: #dcebdd;
+  --portal-green-900: #163d31;
+  --portal-green-800: #1d4d3f;
+  --portal-green-700: #2a6350;
+  --portal-gold: #b98a2f;
+  --portal-border: rgba(22, 61, 49, 0.14);
+  --portal-border-strong: rgba(22, 61, 49, 0.24);
+  --portal-ink: #1f2a26;
+  --portal-muted: #5f6c66;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html.portal-font-transition {
+  transition: font-size 160ms ease;
+}
+
+body {
+  @apply text-gray-900 antialiased;
+  background:
+    radial-gradient(circle at top left, rgba(216, 234, 219, 0.72), transparent 32%),
+    radial-gradient(circle at top right, rgba(245, 232, 207, 0.55), transparent 28%),
+    linear-gradient(180deg, #f9f6ef 0%, #f6f2e8 55%, #f3efe5 100%);
+}
+
+/* Government-style top tricolor bar */
+.tricolor-bar {
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    #FF9933 33.33%,
+    #FFFFFF 33.33%,
+    #FFFFFF 66.66%,
+    #138808 66.66%
+  );
+}
+
+/* Focus ring utility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  --tw-ring-color: rgba(42, 99, 80, 0.45);
+}
+
+/* Card component base */
+.card {
+  @apply p-6 shadow-sm;
+  border-radius: 28px;
+  border: 1px solid var(--portal-border);
+  background: var(--portal-panel);
+  backdrop-filter: blur(8px);
+}
+
+.portal-body {
+  color: var(--portal-ink);
+}
+
+.portal-shell {
+  @apply mx-auto w-full max-w-7xl;
+}
+
+.portal-kicker {
+  @apply text-[11px] font-semibold uppercase tracking-[0.22em];
+  color: var(--portal-gold);
+}
+
+.portal-serif {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.02em;
+}
+
+.portal-notice-strip {
+  background: linear-gradient(135deg, rgba(221, 236, 223, 0.95), rgba(255, 247, 226, 0.96));
+  border: 1px solid rgba(185, 138, 47, 0.18);
+}
+
+.portal-button-primary {
+  @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white transition;
+  background: linear-gradient(135deg, var(--portal-green-800), var(--portal-green-700));
+  box-shadow: 0 12px 30px rgba(29, 77, 63, 0.18);
+}
+
+.portal-button-primary:hover {
+  transform: translateY(-1px);
+}
+
+.portal-button-secondary {
+  @apply inline-flex items-center justify-center rounded-full border px-6 py-3 text-sm font-semibold transition;
+  border-color: var(--portal-border-strong);
+  color: var(--portal-green-900);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.portal-button-secondary:hover {
+  background: rgba(240, 236, 224, 0.92);
+}
+
+.portal-feature-card {
+  @apply rounded-[30px] border p-6 shadow-sm transition;
+  border-color: var(--portal-border);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(10px);
+}
+
+.portal-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 45px rgba(29, 77, 63, 0.08);
+}
+
+.portal-footer {
+  background: linear-gradient(180deg, rgba(251, 248, 242, 0.95), rgba(244, 239, 228, 0.98));
+}
+
+.portal-header-shadow {
+  box-shadow: 0 10px 32px rgba(22, 61, 49, 0.08);
+}
+
+/* Status badge base styles */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+.badge-draft     { @apply bg-gray-100 text-gray-800; }
+.badge-submitted { @apply bg-blue-100 text-blue-800; }
+.badge-scrutiny  { @apply bg-yellow-100 text-yellow-800; }
+.badge-query     { @apply bg-red-100 text-red-800; }
+.badge-approved  { @apply bg-green-100 text-green-800; }
+.badge-mom       { @apply bg-purple-100 text-purple-800; }
+.badge-published { @apply bg-emerald-100 text-emerald-800; }
