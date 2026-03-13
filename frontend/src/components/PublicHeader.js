@@ -54,12 +54,24 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
     t,
   } = usePortalUi();
   const [isLanguageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [openMenuKey, setOpenMenuKey] = useState(null);
   const languageMenuRef = useRef(null);
+  const navMenuRef = useRef(null);
 
   const navItems = [
     { key: "home", href: "/" },
     { key: "about", href: "/#about" },
-    { key: "clearance", href: "#", hasMenu: true },
+    {
+      key: "clearance",
+      href: "/#clearance",
+      hasMenu: true,
+      menuItems: [
+        { key: "environmental", href: "/#clearance-environmental", label: t("home.modules.environmentalTitle") },
+        { key: "forest", href: "/#clearance-forest", label: t("home.modules.forestTitle") },
+        { key: "wildlife", href: "/#clearance-wildlife", label: t("home.modules.wildlifeTitle") },
+        { key: "crz", href: "/#clearance-crz", label: t("home.modules.crzTitle") },
+      ],
+    },
     { key: "downloads", href: "#", hasMenu: true },
     { key: "guide", href: "#", hasMenu: true },
     { key: "contact", href: "#" },
@@ -72,6 +84,10 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
     function handleOutsideClick(event) {
       if (languageMenuRef.current && !languageMenuRef.current.contains(event.target)) {
         setLanguageMenuOpen(false);
+      }
+
+      if (navMenuRef.current && !navMenuRef.current.contains(event.target)) {
+        setOpenMenuKey(null);
       }
     }
 
@@ -164,6 +180,45 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
             {navItems.map((item) => {
               const label = t(`header.nav.${item.key}`);
               const isActive = activeNav === (item.key.charAt(0).toUpperCase() + item.key.slice(1));
+
+              if (item.menuItems) {
+                const isOpen = openMenuKey === item.key;
+
+                return (
+                  <div key={item.key} className="relative" ref={navMenuRef}>
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      aria-haspopup="menu"
+                      onClick={() => setOpenMenuKey((current) => (current === item.key ? null : item.key))}
+                      className={`inline-flex items-center gap-1 rounded-sm px-4 py-3 text-[15px] font-semibold transition ${
+                        isActive || isOpen
+                          ? "bg-[#4b8f34] text-white"
+                          : "text-[#1f1f1f] hover:bg-[#f3f7ef] hover:text-[var(--portal-green-900)]"
+                      }`}
+                    >
+                      {label}
+                      <CaretDown />
+                    </button>
+
+                    {isOpen ? (
+                      <div className="absolute left-0 top-full z-20 mt-2 min-w-[260px] overflow-hidden rounded-2xl border border-[var(--portal-border)] bg-white shadow-[0_20px_45px_rgba(20,55,40,0.12)]">
+                        {item.menuItems.map((menuItem) => (
+                          <Link
+                            key={menuItem.key}
+                            href={menuItem.href}
+                            className="block border-b border-[var(--portal-border)] px-4 py-3 text-sm font-medium text-[var(--portal-ink)] transition hover:bg-[var(--portal-soft)] hover:text-[var(--portal-green-900)] last:border-b-0"
+                            onClick={() => setOpenMenuKey(null)}
+                          >
+                            {menuItem.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.key}

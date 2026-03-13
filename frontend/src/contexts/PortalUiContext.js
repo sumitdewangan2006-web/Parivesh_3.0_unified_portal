@@ -67,6 +67,21 @@ const translations = {
         digitalTitle: "Digital-first Processing",
         digitalNote: "Online documents, payment-gated submission, and workflow actions reduce manual dependency and delays.",
       },
+      clearanceKicker: "Clearance Streams",
+      clearanceTitle: "Clearance Modules And Their Purpose",
+      clearanceDescription:
+        "Each clearance stream in PARIVESH 3.0 is grouped into a dedicated operational area so proposal handling, scrutiny, and outcomes stay structured and traceable.",
+      clearanceLabel: "Module",
+      clearance: {
+        environmentalDetail:
+          "Handles end-to-end environmental proposal submission, document review, fee completion, and committee-ready appraisal workflow.",
+        forestDetail:
+          "Supports forest-related proposals with structured scrutiny, status movement, supporting document validation, and decision tracking.",
+        wildlifeDetail:
+          "Provides a dedicated path for proposals involving wildlife and protected-area review requirements with auditable remarks and actions.",
+        crzDetail:
+          "Covers coastal regulation zone applications with workflow checkpoints for compliance review, documentation, and final processing updates.",
+      },
       trackProposal: "Track Your Proposal",
       knowApproval: "Know Your Approval",
       openDashboard: "Open Dashboard",
@@ -194,6 +209,21 @@ const translations = {
         transparencyNote: "स्थिति इतिहास और दर्ज टिप्पणियां प्रत्येक आवेदन के लिए पूर्ण निर्णय-पथ उपलब्ध कराती हैं।",
         digitalTitle: "डिजिटल-फर्स्ट प्रोसेसिंग",
         digitalNote: "ऑनलाइन दस्तावेज, भुगतान आधारित सबमिशन और डिजिटल कार्यवाहियां मैनुअल निर्भरता और देरी कम करती हैं।",
+      },
+      clearanceKicker: "क्लीयरेंस स्ट्रीम्स",
+      clearanceTitle: "क्लीयरेंस मॉड्यूल और उनका उद्देश्य",
+      clearanceDescription:
+        "परिवेश 3.0 में प्रत्येक क्लीयरेंस स्ट्रीम को अलग परिचालन अनुभाग में व्यवस्थित किया गया है ताकि प्रस्ताव प्रबंधन, स्क्रूटनी और निर्णय सुव्यवस्थित और ट्रेस योग्य बने रहें।",
+      clearanceLabel: "मॉड्यूल",
+      clearance: {
+        environmentalDetail:
+          "यह पर्यावरण प्रस्तावों के लिए आवेदन, दस्तावेज समीक्षा, शुल्क पूर्णता और समिति-उन्मुख मूल्यांकन कार्यप्रवाह को संभालता है।",
+        forestDetail:
+          "यह वन संबंधी प्रस्तावों के लिए संरचित स्क्रूटनी, स्थिति परिवर्तन, दस्तावेज सत्यापन और निर्णय ट्रैकिंग प्रदान करता है।",
+        wildlifeDetail:
+          "यह वन्यजीव और संरक्षित क्षेत्र संबंधी प्रस्तावों के लिए टिप्पणियों और कार्रवाइयों सहित समर्पित समीक्षा पथ उपलब्ध कराता है।",
+        crzDetail:
+          "यह तटीय विनियमन क्षेत्र आवेदनों के लिए अनुपालन समीक्षा, दस्तावेज प्रबंधन और अंतिम प्रक्रिया अद्यतन हेतु कार्यप्रवाह बिंदु उपलब्ध कराता है।",
       },
       trackProposal: "अपना प्रस्ताव ट्रैक करें",
       knowApproval: "अपनी स्वीकृति जानें",

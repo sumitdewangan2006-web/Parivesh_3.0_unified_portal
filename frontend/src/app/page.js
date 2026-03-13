@@ -7,10 +7,30 @@ import { usePortalUi } from "@/contexts/PortalUiContext";
 export default function HomePage() {
   const { t } = usePortalUi();
   const clearances = [
-    { title: t("home.modules.environmentalTitle"), note: t("home.modules.environmentalNote") },
-    { title: t("home.modules.forestTitle"), note: t("home.modules.forestNote") },
-    { title: t("home.modules.wildlifeTitle"), note: t("home.modules.wildlifeNote") },
-    { title: t("home.modules.crzTitle"), note: t("home.modules.crzNote") },
+    {
+      id: "clearance-environmental",
+      title: t("home.modules.environmentalTitle"),
+      note: t("home.modules.environmentalNote"),
+      detail: t("home.clearance.environmentalDetail"),
+    },
+    {
+      id: "clearance-forest",
+      title: t("home.modules.forestTitle"),
+      note: t("home.modules.forestNote"),
+      detail: t("home.clearance.forestDetail"),
+    },
+    {
+      id: "clearance-wildlife",
+      title: t("home.modules.wildlifeTitle"),
+      note: t("home.modules.wildlifeNote"),
+      detail: t("home.clearance.wildlifeDetail"),
+    },
+    {
+      id: "clearance-crz",
+      title: t("home.modules.crzTitle"),
+      note: t("home.modules.crzNote"),
+      detail: t("home.clearance.crzDetail"),
+    },
   ];
 
   const quickActions = [
@@ -73,7 +93,7 @@ export default function HomePage() {
                 <p className="portal-kicker">{t("home.modulesKicker")}</p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   {clearances.map((item) => (
-                    <div key={item.title} className="rounded-2xl border border-[var(--portal-border)] bg-white px-4 py-4 shadow-sm">
+                    <div key={item.id} className="rounded-2xl border border-[var(--portal-border)] bg-white px-4 py-4 shadow-sm">
                       <div className="text-sm font-semibold text-[var(--portal-green-900)]">{item.title}</div>
                       <div className="mt-1 text-sm leading-6 text-[var(--portal-muted)]">{item.note}</div>
                     </div>
@@ -104,6 +124,40 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="clearance" className="scroll-mt-28 border-b border-[var(--portal-border)] bg-[linear-gradient(180deg,rgba(232,244,236,0.45),rgba(255,255,255,0.92))] py-14 sm:py-16">
+        <div className="portal-shell px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex flex-col gap-3 text-center">
+            <p className="portal-kicker">{t("home.clearanceKicker")}</p>
+            <h2 className="portal-serif text-3xl text-[var(--portal-green-900)] sm:text-4xl">{t("home.clearanceTitle")}</h2>
+            <p className="mx-auto max-w-3xl text-[15px] leading-7 text-[var(--portal-muted)]">
+              {t("home.clearanceDescription")}
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {clearances.map((item, index) => (
+              <article
+                key={item.id}
+                id={item.id}
+                className="scroll-mt-32 rounded-[28px] border border-[var(--portal-border)] bg-white p-6 shadow-[0_18px_50px_rgba(27,80,60,0.08)]"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--portal-green-900)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+                  <div className="rounded-full bg-[var(--portal-soft-green)] px-3 py-1 text-xs font-semibold text-[var(--portal-green-900)]">
+                    {t("home.clearanceLabel")}
+                  </div>
+                </div>
+                <h3 className="portal-serif mt-5 text-2xl text-[var(--portal-green-900)]">{item.title}</h3>
+                <p className="mt-3 text-sm font-medium leading-6 text-[var(--portal-green-900)]/80">{item.note}</p>
+                <p className="mt-3 text-sm leading-7 text-[var(--portal-muted)]">{item.detail}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
