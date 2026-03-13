@@ -56,7 +56,7 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
   const [isLanguageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [openMenuKey, setOpenMenuKey] = useState(null);
   const languageMenuRef = useRef(null);
-  const navMenuRef = useRef(null);
+  const navigationRef = useRef(null);
 
   const navItems = [
     { key: "home", href: "/" },
@@ -72,12 +72,42 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
         { key: "crz", href: "/#clearance-crz", label: t("home.modules.crzTitle") },
       ],
     },
-    { key: "downloads", href: "#", hasMenu: true },
-    { key: "guide", href: "#", hasMenu: true },
-    { key: "contact", href: "#" },
+    {
+      key: "downloads",
+      href: "/#downloads",
+      hasMenu: true,
+      menuItems: [
+        { key: "demo-script", href: "/#downloads-demo-script", label: t("home.downloads.demoScriptTitle") },
+        { key: "scorecard", href: "/#downloads-scorecard", label: t("home.downloads.scorecardTitle") },
+        { key: "health-check", href: "/#downloads-health-check", label: t("home.downloads.healthCheckTitle") },
+        { key: "reset", href: "/#downloads-reset", label: t("home.downloads.resetTitle") },
+      ],
+    },
+    {
+      key: "guide",
+      href: "/#guide",
+      hasMenu: true,
+      menuItems: [
+        { key: "proponent", href: "/#guide-proponent", label: t("home.guide.proponentTitle") },
+        { key: "scrutiny", href: "/#guide-scrutiny", label: t("home.guide.scrutinyTitle") },
+        { key: "mom", href: "/#guide-mom", label: t("home.guide.momTitle") },
+        { key: "admin", href: "/#guide-admin", label: t("home.guide.adminTitle") },
+      ],
+    },
+    { key: "contact", href: "/#contact" },
     { key: "dashboard", href: "/dashboard" },
-    { key: "complaint", href: "#" },
-    { key: "vacancies", href: "#" },
+    { key: "complaint", href: "/#complaint" },
+    { key: "vacancies", href: "/#vacancies" },
+  ];
+
+  const quickAccessItems = [
+    { key: "about", href: "/#about", label: t("header.nav.about") },
+    { key: "clearance", href: "/#clearance", label: t("header.nav.clearance") },
+    { key: "downloads", href: "/#downloads", label: t("header.nav.downloads") },
+    { key: "guide", href: "/#guide", label: t("header.nav.guide") },
+    { key: "contact", href: "/#contact", label: t("header.nav.contact") },
+    { key: "complaint", href: "/#complaint", label: t("header.nav.complaint") },
+    { key: "vacancies", href: "/#vacancies", label: t("header.nav.vacancies") },
   ];
 
   useEffect(() => {
@@ -86,7 +116,7 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
         setLanguageMenuOpen(false);
       }
 
-      if (navMenuRef.current && !navMenuRef.current.contains(event.target)) {
+      if (navigationRef.current && !navigationRef.current.contains(event.target)) {
         setOpenMenuKey(null);
       }
     }
@@ -175,7 +205,7 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
       </div>
 
       <nav className="border-t border-[var(--portal-border)] bg-white">
-        <div className="portal-shell flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div ref={navigationRef} className="portal-shell flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex flex-1 flex-wrap items-center gap-1 md:gap-2">
             {navItems.map((item) => {
               const label = t(`header.nav.${item.key}`);
@@ -185,7 +215,7 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
                 const isOpen = openMenuKey === item.key;
 
                 return (
-                  <div key={item.key} className="relative" ref={navMenuRef}>
+                  <div key={item.key} className="relative">
                     <button
                       type="button"
                       aria-expanded={isOpen}
@@ -237,12 +267,29 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              className="inline-flex items-center rounded-sm bg-[#d7a63c] px-5 py-3 text-[15px] font-semibold text-white shadow-sm hover:bg-[#c59530]"
-            >
-              {t("header.search")}
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenMenuKey((current) => (current === "search" ? null : "search"))}
+                className="inline-flex items-center rounded-sm bg-[#d7a63c] px-5 py-3 text-[15px] font-semibold text-white shadow-sm hover:bg-[#c59530]"
+              >
+                {t("header.search")}
+              </button>
+              {openMenuKey === "search" ? (
+                <div className="absolute right-0 top-full z-20 mt-2 min-w-[220px] overflow-hidden rounded-2xl border border-[var(--portal-border)] bg-white shadow-[0_20px_45px_rgba(20,55,40,0.12)]">
+                  {quickAccessItems.map((item) => (
+                    <Link
+                      key={item.key}
+                      href={item.href}
+                      className="block border-b border-[var(--portal-border)] px-4 py-3 text-sm font-medium text-[var(--portal-ink)] transition hover:bg-[var(--portal-soft)] hover:text-[var(--portal-green-900)] last:border-b-0"
+                      onClick={() => setOpenMenuKey(null)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <Link
               href="/auth/login"
               className={`inline-flex items-center gap-1 rounded-sm px-5 py-3 text-[15px] font-semibold shadow-sm ${

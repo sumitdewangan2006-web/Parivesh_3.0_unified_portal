@@ -82,6 +82,54 @@ const translations = {
         crzDetail:
           "Covers coastal regulation zone applications with workflow checkpoints for compliance review, documentation, and final processing updates.",
       },
+      downloadsKicker: "Downloads & Resources",
+      downloadsTitle: "Reference Material For Portal Use",
+      downloadsDescription:
+        "These resources summarize the demo environment, evaluation framing, health validation, and reset operations that support the portal walkthrough.",
+      downloads: {
+        demoScriptTitle: "Demo Walkthrough Script",
+        demoScriptNote: "Role-by-role walkthrough covering proposal submission, scrutiny actions, meeting processing, and administrative review flow.",
+        scorecardTitle: "Evaluation Scorecard",
+        scorecardNote: "Assessment reference that maps the portal experience to demonstration criteria and judging checkpoints.",
+        healthCheckTitle: "Service Health Check",
+        healthCheckNote: "Operational reference for verifying Docker services, API reachability, and runtime readiness before the demo starts.",
+        resetTitle: "Environment Reset",
+        resetNote: "Reset procedure for restoring the demo flow, seeded data, and service state between walkthrough runs.",
+      },
+      guideKicker: "User Guide",
+      guideTitle: "How Each Team Uses The Portal",
+      guideDescription:
+        "The portal is organized around role-specific workflows so every team interacts only with the functions needed for its responsibilities.",
+      guide: {
+        proponentTitle: "Project Proponents",
+        proponentNote: "Create proposals, upload documents, complete EC fee payment, and track application progress through the unified dashboard.",
+        scrutinyTitle: "Scrutiny Officers",
+        scrutinyNote: "Review assigned proposals, record remarks, seek essential documents, and move applications toward committee consideration.",
+        momTitle: "MoM Teams",
+        momNote: "Create meetings, attach referred proposals, draft outcomes, and finalize or publish the minutes of meeting records.",
+        adminTitle: "Administrators",
+        adminNote: "Manage users, categories, sectors, officer assignment, analytics visibility, and overall portal operations.",
+      },
+      contactKicker: "Contact & Support",
+      contactTitle: "Need Assistance With The Portal?",
+      contactDescription:
+        "For demo use, support workflows begin through the sign-in and registration journey so users can be identified and routed correctly inside the portal.",
+      contact: {
+        supportTitle: "Access Support",
+        supportNote: "Use the authentication flow to access proposal dashboards, guided actions, and role-based support paths inside the portal workspace.",
+      },
+      complaintKicker: "Complaint Handling",
+      complaintTitle: "Raise A Portal Complaint",
+      complaintDescription:
+        "Complaint and issue reporting should be initiated by authenticated users so the portal can keep a clear record of identity, workflow context, and follow-up actions.",
+      complaint: {
+        primaryAction: "Sign In To Raise Complaint",
+        secondaryAction: "Register A New Account",
+      },
+      vacanciesKicker: "Vacancies & Notices",
+      vacanciesTitle: "Recruitment And Notice Board",
+      vacanciesDescription:
+        "This demo environment does not currently publish live vacancy notices, but the section is reserved for future announcements, circulars, and recruitment updates.",
       trackProposal: "Track Your Proposal",
       knowApproval: "Know Your Approval",
       openDashboard: "Open Dashboard",
@@ -225,6 +273,54 @@ const translations = {
         crzDetail:
           "यह तटीय विनियमन क्षेत्र आवेदनों के लिए अनुपालन समीक्षा, दस्तावेज प्रबंधन और अंतिम प्रक्रिया अद्यतन हेतु कार्यप्रवाह बिंदु उपलब्ध कराता है।",
       },
+      downloadsKicker: "डाउनलोड और संसाधन",
+      downloadsTitle: "पोर्टल उपयोग के लिए संदर्भ सामग्री",
+      downloadsDescription:
+        "ये संसाधन डेमो वातावरण, मूल्यांकन ढांचे, सेवा सत्यापन और रीसेट संचालन का सार प्रस्तुत करते हैं।",
+      downloads: {
+        demoScriptTitle: "डेमो वॉकथ्रू स्क्रिप्ट",
+        demoScriptNote: "भूमिका-आधारित वॉकथ्रू जिसमें प्रस्ताव जमा करना, स्क्रूटनी, बैठक प्रक्रिया और प्रशासनिक समीक्षा शामिल है।",
+        scorecardTitle: "मूल्यांकन स्कोरकार्ड",
+        scorecardNote: "यह संदर्भ पोर्टल अनुभव को प्रदर्शन मानदंडों और मूल्यांकन बिंदुओं से जोड़ता है।",
+        healthCheckTitle: "सर्विस हेल्थ चेक",
+        healthCheckNote: "डॉकर सेवाओं, एपीआई उपलब्धता और रनटाइम तैयारी की जांच के लिए परिचालन संदर्भ।",
+        resetTitle: "एनवायरनमेंट रीसेट",
+        resetNote: "डेमो प्रवाह, सीडेड डेटा और सेवा स्थिति को पुनर्स्थापित करने की रीसेट प्रक्रिया।",
+      },
+      guideKicker: "उपयोगकर्ता गाइड",
+      guideTitle: "प्रत्येक टीम पोर्टल का उपयोग कैसे करती है",
+      guideDescription:
+        "पोर्टल को भूमिका-विशिष्ट कार्यप्रवाहों के अनुसार व्यवस्थित किया गया है ताकि प्रत्येक टीम केवल अपने आवश्यक कार्यों का उपयोग करे।",
+      guide: {
+        proponentTitle: "परियोजना प्रस्तावक",
+        proponentNote: "प्रस्ताव बनाएं, दस्तावेज अपलोड करें, ईसी शुल्क पूरा करें और डैशबोर्ड पर प्रगति ट्रैक करें।",
+        scrutinyTitle: "स्क्रूटनी अधिकारी",
+        scrutinyNote: "आवंटित प्रस्तावों की समीक्षा करें, टिप्पणियां दर्ज करें, आवश्यक दस्तावेज मांगें और आवेदन आगे बढ़ाएं।",
+        momTitle: "मोम टीमें",
+        momNote: "बैठक बनाएं, प्रस्ताव जोड़ें, परिणाम तैयार करें और बैठक के मिनट अंतिम या प्रकाशित करें।",
+        adminTitle: "प्रशासक",
+        adminNote: "उपयोगकर्ता, श्रेणियां, सेक्टर, अधिकारी आवंटन, विश्लेषण दृश्यता और संपूर्ण पोर्टल संचालन प्रबंधित करें।",
+      },
+      contactKicker: "संपर्क और सहायता",
+      contactTitle: "पोर्टल में सहायता चाहिए?",
+      contactDescription:
+        "डेमो उपयोग के लिए सहायता प्रवाह साइन-इन और रजिस्ट्रेशन यात्रा से शुरू होता है ताकि उपयोगकर्ता सही भूमिका और कार्यक्षेत्र तक पहुंच सकें।",
+      contact: {
+        supportTitle: "एक्सेस सहायता",
+        supportNote: "प्रस्ताव डैशबोर्ड, निर्देशित कार्रवाइयों और भूमिका-आधारित सहायता पथों तक पहुंचने के लिए प्रमाणीकरण प्रवाह का उपयोग करें।",
+      },
+      complaintKicker: "शिकायत प्रबंधन",
+      complaintTitle: "पोर्टल शिकायत दर्ज करें",
+      complaintDescription:
+        "शिकायत और समस्या रिपोर्टिंग प्रमाणित उपयोगकर्ताओं द्वारा शुरू की जानी चाहिए ताकि पोर्टल पहचान, संदर्भ और फॉलो-अप रिकॉर्ड रख सके।",
+      complaint: {
+        primaryAction: "शिकायत हेतु साइन इन करें",
+        secondaryAction: "नया खाता पंजीकृत करें",
+      },
+      vacanciesKicker: "रिक्तियां और सूचनाएं",
+      vacanciesTitle: "भर्ती और नोटिस बोर्ड",
+      vacanciesDescription:
+        "यह डेमो वातावरण वर्तमान में लाइव रिक्तियां प्रकाशित नहीं करता, लेकिन यह अनुभाग भविष्य की सूचनाओं और भर्ती अपडेट के लिए सुरक्षित है।",
       trackProposal: "अपना प्रस्ताव ट्रैक करें",
       knowApproval: "अपनी स्वीकृति जानें",
       openDashboard: "डैशबोर्ड खोलें",
