@@ -53,6 +53,20 @@ const translations = {
         "Unified Environmental Clearance Portal for application filing, scrutiny, meeting workflows, payment-gated submission, audit-ready history, and final publication across green approval lifecycles.",
       notice:
         "New portal flow: proposal drafts can be submitted only after EC fee completion. Proponents, scrutiny teams, MoM teams, and administrators operate in one consolidated workflow.",
+      aboutKicker: "About PARIVESH 3.0",
+      aboutTitle: "Integrated Portal For Green Clearances",
+      aboutDescription:
+        "PARIVESH 3.0 is a unified digital platform to process environmental approvals end-to-end. It brings proposal filing, scrutiny, meeting outcomes, compliance tracking, and administrative monitoring into one secure and auditable system.",
+      about: {
+        workflowTitle: "Single Workflow",
+        workflowNote: "From draft submission to final decision, every stage is managed through one connected process.",
+        rolesTitle: "Role-based Access",
+        rolesNote: "Proponents, scrutiny officers, MoM teams, and administrators work through dedicated role dashboards.",
+        transparencyTitle: "Traceable Decisions",
+        transparencyNote: "Status history and recorded remarks provide a complete decision trail for each application.",
+        digitalTitle: "Digital-first Processing",
+        digitalNote: "Online documents, payment-gated submission, and workflow actions reduce manual dependency and delays.",
+      },
       trackProposal: "Track Your Proposal",
       knowApproval: "Know Your Approval",
       openDashboard: "Open Dashboard",
@@ -167,6 +181,20 @@ const translations = {
         "आवेदन दायर करने, स्क्रूटनी, बैठक कार्यप्रवाह, भुगतान-आधारित सबमिशन, ऑडिट योग्य इतिहास और अंतिम प्रकाशन के लिए एकीकृत पर्यावरण स्वीकृति पोर्टल।",
       notice:
         "नया पोर्टल कार्यप्रवाह: प्रारूप आवेदन केवल ईसी शुल्क पूर्ण होने के बाद ही जमा किए जा सकते हैं। प्रस्तावक, स्क्रूटनी टीम, मोम टीम और प्रशासक एकीकृत कार्यप्रवाह में काम करते हैं।",
+      aboutKicker: "परिवेश 3.0 के बारे में",
+      aboutTitle: "हरित स्वीकृतियों के लिए एकीकृत पोर्टल",
+      aboutDescription:
+        "परिवेश 3.0 एक एकीकृत डिजिटल प्लेटफॉर्म है जो पर्यावरण स्वीकृति की पूरी प्रक्रिया को एक स्थान पर लाता है। इसमें प्रस्ताव जमा करना, स्क्रूटनी, बैठक परिणाम, अनुपालन ट्रैकिंग और प्रशासनिक निगरानी शामिल है।",
+      about: {
+        workflowTitle: "एकल कार्यप्रवाह",
+        workflowNote: "ड्राफ्ट आवेदन से अंतिम निर्णय तक हर चरण एक ही जुड़ी हुई प्रक्रिया में संचालित होता है।",
+        rolesTitle: "भूमिका आधारित पहुंच",
+        rolesNote: "प्रस्तावक, स्क्रूटनी अधिकारी, मोम टीम और प्रशासक अपनी-अपनी डैशबोर्ड आधारित भूमिकाओं में कार्य करते हैं।",
+        transparencyTitle: "ट्रेसेबल निर्णय",
+        transparencyNote: "स्थिति इतिहास और दर्ज टिप्पणियां प्रत्येक आवेदन के लिए पूर्ण निर्णय-पथ उपलब्ध कराती हैं।",
+        digitalTitle: "डिजिटल-फर्स्ट प्रोसेसिंग",
+        digitalNote: "ऑनलाइन दस्तावेज, भुगतान आधारित सबमिशन और डिजिटल कार्यवाहियां मैनुअल निर्भरता और देरी कम करती हैं।",
+      },
       trackProposal: "अपना प्रस्ताव ट्रैक करें",
       knowApproval: "अपनी स्वीकृति जानें",
       openDashboard: "डैशबोर्ड खोलें",

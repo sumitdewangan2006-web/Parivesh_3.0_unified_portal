@@ -26,6 +26,13 @@ export default function HomePage() {
     { title: t("home.features.analyticsTitle"), desc: t("home.features.analyticsDesc"), icon: "04" },
   ];
 
+  const aboutDetails = [
+    { title: t("home.about.workflowTitle"), note: t("home.about.workflowNote") },
+    { title: t("home.about.rolesTitle"), note: t("home.about.rolesNote") },
+    { title: t("home.about.transparencyTitle"), note: t("home.about.transparencyNote") },
+    { title: t("home.about.digitalTitle"), note: t("home.about.digitalNote") },
+  ];
+
   return (
     <main className="flex min-h-screen flex-col bg-[var(--portal-canvas)]">
       <PublicHeader activeNav="Home" />
@@ -76,6 +83,26 @@ export default function HomePage() {
                   {t("home.modulesBanner")}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" className="scroll-mt-28 border-b border-[var(--portal-border)] bg-white/80 py-14 sm:py-16">
+        <div className="portal-shell px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-start">
+            <div className="space-y-4">
+              <p className="portal-kicker">{t("home.aboutKicker")}</p>
+              <h2 className="portal-serif text-3xl text-[var(--portal-green-900)] sm:text-4xl">{t("home.aboutTitle")}</h2>
+              <p className="max-w-3xl text-[15px] leading-7 text-[var(--portal-muted)]">{t("home.aboutDescription")}</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {aboutDetails.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-panel)] p-5 shadow-sm">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.1em] text-[var(--portal-green-900)]">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[var(--portal-muted)]">{item.note}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

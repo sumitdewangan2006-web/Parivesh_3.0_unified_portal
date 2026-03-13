@@ -58,7 +58,7 @@ export default function PublicHeader({ activeNav = "Home", activeAction }) {
 
   const navItems = [
     { key: "home", href: "/" },
-    { key: "about", href: "#" },
+    { key: "about", href: "/#about" },
     { key: "clearance", href: "#", hasMenu: true },
     { key: "downloads", href: "#", hasMenu: true },
     { key: "guide", href: "#", hasMenu: true },
