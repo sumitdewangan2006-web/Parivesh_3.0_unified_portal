@@ -10,7 +10,6 @@ export default function PortalFooter() {
     { label: t("footer.terms"), href: "#" },
     { label: t("footer.hyperlinking"), href: "#" },
     { label: t("footer.accessibility"), href: "#" },
-    { label: t("footer.disclaimer"), href: "#" },
   ];
 
   return (
@@ -41,9 +40,6 @@ export default function PortalFooter() {
                   </Link>
                 ))}
               </div>
-            </div>
-            <div className="rounded-2xl bg-[var(--portal-soft)] p-4 text-sm leading-6 text-[var(--portal-muted)]">
-              {t("footer.note")}
             </div>
             <div className="text-xs leading-5 text-[var(--portal-muted)]">
               {t("footer.context")}

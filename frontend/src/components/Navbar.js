@@ -27,18 +27,9 @@ export default function Navbar({ onToggleSidebar }) {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--portal-border)] bg-[rgba(255,251,244,0.94)] backdrop-blur">
       <div className="tricolor-bar" />
-      <div className="flex flex-col gap-3 px-4 py-3 lg:px-6">
-        <div className="flex items-center justify-between gap-4 text-[11px] uppercase tracking-[0.18em] text-[var(--portal-muted)]">
-          <div className="flex items-center gap-2">
-            <span>Government Workflow Console</span>
-            <span className="hidden text-[var(--portal-border-strong)] sm:inline">|</span>
-            <span className="hidden sm:inline">PARIVESH 3.0</span>
-          </div>
-          <span className="hidden md:inline">Ministry of Environment, Forest and Climate Change</span>
-        </div>
-
+      <div className="px-4 py-3 lg:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <button
               onClick={onToggleSidebar}
               className="rounded-xl border border-[var(--portal-border)] bg-white p-2 text-[var(--portal-green-900)] hover:bg-[var(--portal-soft)] lg:hidden"
@@ -48,12 +39,13 @@ export default function Navbar({ onToggleSidebar }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="space-y-1">
+            <div className="shrink-0">
               <PortalBrandMark
-                subtitle="Administrative and proposal workflow console"
+                framed={false}
+                imageWidthClass="w-[200px] sm:w-[240px]"
+                imageHeightClass="h-12 sm:h-14"
                 className="max-w-full"
               />
-              <p className="text-sm text-[var(--portal-muted)]">Unified portal for green clearance processing and administrative review</p>
             </div>
           </div>
 
