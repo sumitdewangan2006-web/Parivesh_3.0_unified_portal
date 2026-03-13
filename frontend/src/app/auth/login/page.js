@@ -38,7 +38,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 to-white">
+    <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#eff8f1_0%,#edf6ef_52%,#e9f3eb_100%)]">
       <PublicHeader activeAction="login" />
 
       <div className="flex-1 flex items-center justify-center px-4 py-12 md:py-16">
