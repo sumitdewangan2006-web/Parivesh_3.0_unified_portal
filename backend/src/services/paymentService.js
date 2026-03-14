@@ -2,8 +2,9 @@
 // Mock UPI/QR payment processing for EC application fees
 
 const { v4: uuidv4 } = require("uuid");
-const { Payment, Application, StatusHistory } = require("../models");
+const { Payment, Application, StatusHistory, Document } = require("../models");
 const EnvironmentalRiskService = require("./environmentalRiskService");
+const ChecklistValidationService = require("./checklistValidationService");
 
 const CRORE = 1_00_00_000; // 1 Crore = 10,000,000 INR
 
@@ -19,6 +20,55 @@ class PaymentService {
     if (cost < 50 * CRORE) return 50000;
     if (cost <= 100 * CRORE) return 100000;
     return 200000;
+  }
+
+  static async ensureChecklistReadyForPayment(app) {
+    if (!app.mineral_type) {
+      const err = new Error("Mineral / project type is required before payment");
+      err.status = 400;
+      throw err;
+    }
+
+    const effectiveChecklist = await ChecklistValidationService.getEffectiveChecklist(
+      app.mineral_type,
+      app.sector_id
+    );
+    if (!effectiveChecklist.length) {
+      const err = new Error("Invalid mineral / project type for checklist validation");
+      err.status = 400;
+      throw err;
+    }
+
+    const requiredItems = effectiveChecklist.filter((item) => item.required);
+    if (!requiredItems.length) return;
+
+    const activeDocuments = await Document.findAll({
+      where: { application_id: app.id, is_active: true },
+      attributes: ["document_type"],
+    });
+
+    const uploaded = new Set(
+      activeDocuments
+        .map((doc) => doc.document_type)
+        .filter((key) => typeof key === "string" && key.trim() !== "")
+    );
+
+    const missingDocuments = requiredItems
+      .filter((item) => !uploaded.has(item.key))
+      .map((item) => ({ key: item.key, label: item.label, sno: item.sno }));
+
+    if (missingDocuments.length) {
+      const err = new Error(
+        `Upload all required checklist documents before payment (${missingDocuments.length} pending)`
+      );
+      err.status = 400;
+      err.code = "CHECKLIST_INCOMPLETE";
+      err.details = {
+        mineral_type: app.mineral_type,
+        missing_documents: missingDocuments,
+      };
+      throw err;
+    }
   }
 
   // ── Calculate fee for an application ──────────────────
@@ -44,6 +94,8 @@ class PaymentService {
       err.status = 400;
       throw err;
     }
+
+    await PaymentService.ensureChecklistReadyForPayment(app);
     const fee = PaymentService.calculateFee(app.estimated_cost);
     return {
       application_id: app.id,
@@ -76,6 +128,8 @@ class PaymentService {
       err.status = 400;
       throw err;
     }
+
+    await PaymentService.ensureChecklistReadyForPayment(app);
 
     const completedPayment = await Payment.findOne({
       where: { application_id: applicationId, status: "completed" },
@@ -147,13 +201,17 @@ class PaymentService {
       throw err;
     }
 
+    const app = await Application.findByPk(payment.application_id);
+    if (!app) return payment;
+
+    if (app.status === "draft") {
+      await PaymentService.ensureChecklistReadyForPayment(app);
+    }
+
     payment.status = "completed";
     payment.transaction_id = `TXN-${uuidv4().substring(0, 12).toUpperCase()}`;
     payment.paid_at = new Date();
     await payment.save();
-
-    const app = await Application.findByPk(payment.application_id);
-    if (!app) return payment;
 
     // Payment happens within the draft stage and immediately submits the application.
     if (app.status === "draft") {
@@ -221,12 +279,16 @@ class PaymentService {
       throw err;
     }
 
+    const app = await Application.findByPk(payment.application_id);
+    if (app && app.status === "draft") {
+      await PaymentService.ensureChecklistReadyForPayment(app);
+    }
+
     payment.status = "completed";
     payment.transaction_id = `TXN-${uuidv4().substring(0, 12).toUpperCase()}`;
     payment.paid_at = new Date();
     await payment.save();
 
-    const app = await Application.findByPk(payment.application_id);
     if (app && app.status === "draft") {
       app.status = "submitted";
       app.submitted_at = new Date();

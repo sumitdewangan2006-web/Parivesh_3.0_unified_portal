@@ -220,7 +220,8 @@ parivesh-3.0/
 git clone https://github.com/sumitdewangan2006-web/Parivesh_3.0_unified_portal
 cd Parivesh_3.0_unified_portal
 
-# Start all services (demo mode: Docker enables AUTO_SYNC and SEED_DEMO_DATA explicitly)
+# Start all services
+# Backend waits for Postgres, runs migrations automatically, then starts the API
 docker compose up --build
 ```
 
@@ -254,11 +255,11 @@ npm run dev                   # Starts on port 3000
 
 ### Demo Login
 
-The default password depends on how data was seeded:
+The default password depends on how demo data was seeded:
 
 | Startup Path | Default Password |
 | ------------ | ---------------- |
-| Docker quick start (`AUTO_SYNC=true`, `SEED_DEMO_DATA=true`) | `Test@123` |
+| Docker quick start (`MIGRATE_ON_START=true`, `SEED_DEMO_DATA=true`) | `Test@123` |
 | Local migration + `npm run seed` | `Admin@123` |
 
 | Role              | Email                      |
@@ -425,6 +426,7 @@ gist_templates ── categories / sectors
 ```env
 NODE_ENV=development
 AUTO_SYNC=false
+MIGRATE_ON_START=false
 SEED_DEMO_DATA=false
 PORT=5000
 DB_HOST=localhost
@@ -432,6 +434,8 @@ DB_PORT=5432
 DB_NAME=parivesh_db
 DB_USER=parivesh_admin
 DB_PASSWORD=parivesh_secure_2024
+DB_WAIT_MAX_ATTEMPTS=30
+DB_WAIT_DELAY_MS=2000
 JWT_SECRET=your_jwt_secret_change_in_production
 JWT_EXPIRY=24h
 UPLOAD_DIR=./uploads
@@ -439,7 +443,7 @@ MAX_FILE_SIZE_MB=10
 CORS_ORIGIN=http://localhost:3000
 ```
 
-`AUTO_SYNC` and `SEED_DEMO_DATA` are intended for controlled demo/local startup only. In production-like environments, keep both disabled and run migrations/seeding explicitly.
+`AUTO_SYNC` should remain disabled once migrations are in use. For Docker startup, `MIGRATE_ON_START=true` lets the backend wait for PostgreSQL and apply pending migrations before booting. `SEED_DEMO_DATA` is still optional and should only be enabled for demo/local environments.
 
 Note: if `MAX_FILE_SIZE_MB` is omitted, runtime fallback in backend config is 50 MB.
 

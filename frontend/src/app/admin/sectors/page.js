@@ -10,7 +10,11 @@ import toast from "react-hot-toast";
 
 function SectorsContent() {
   const [sectors, setSectors] = useState([]);
+  const [documentCatalog, setDocumentCatalog] = useState([]);
+  const [ruleMap, setRuleMap] = useState({});
+  const [ruleSearch, setRuleSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingRules, setLoadingRules] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", description: "" });
@@ -30,29 +34,82 @@ function SectorsContent() {
 
   useEffect(() => { fetchSectors(); }, []);
 
+  useEffect(() => {
+    api
+      .get("/config/document-catalog")
+      .then(({ data }) => setDocumentCatalog(data || []))
+      .catch(() => toast.error("Failed to load document catalog"));
+  }, []);
+
+  const loadSectorRules = async (sectorId) => {
+    setLoadingRules(true);
+    try {
+      const { data } = await api.get(`/config/sectors/${sectorId}/document-rules`);
+      const next = {};
+      (data || []).forEach((rule) => {
+        if (rule.is_required) {
+          next[rule.document_key] = true;
+        }
+      });
+      setRuleMap(next);
+    } catch {
+      toast.error("Failed to load sector document parameters");
+      setRuleMap({});
+    } finally {
+      setLoadingRules(false);
+    }
+  };
+
   const openCreate = () => {
     setEditing(null);
     setForm({ name: "", description: "" });
+    setRuleMap({});
+    setRuleSearch("");
     setShowModal(true);
   };
 
   const openEdit = (sec) => {
     setEditing(sec);
     setForm({ name: sec.name, description: sec.description || "" });
+    setRuleSearch("");
     setShowModal(true);
+    loadSectorRules(sec.id);
+  };
+
+  const toggleRule = (documentKey) => {
+    setRuleMap((prev) => {
+      const next = { ...prev };
+      if (next[documentKey]) {
+        delete next[documentKey];
+      } else {
+        next[documentKey] = true;
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
+      let sectorId = editing?.id;
       if (editing) {
         await api.put(`/config/sectors/${editing.id}`, form);
         toast.success("Sector updated");
       } else {
-        await api.post("/config/sectors", form);
+        const { data } = await api.post("/config/sectors", form);
+        sectorId = data.id;
         toast.success("Sector created");
       }
+
+      if (sectorId) {
+        const rulesPayload = Object.keys(ruleMap)
+          .filter((key) => ruleMap[key])
+          .map((key) => ({ document_key: key, is_required: true }));
+
+        await api.put(`/config/sectors/${sectorId}/document-rules`, { rules: rulesPayload });
+      }
+
       setShowModal(false);
       fetchSectors();
     } catch (err) {
@@ -61,6 +118,10 @@ function SectorsContent() {
       setSaving(false);
     }
   };
+
+  const filteredCatalog = documentCatalog.filter((item) =>
+    `${item.label} ${item.key}`.toLowerCase().includes(ruleSearch.toLowerCase())
+  );
 
   return (
     <>
@@ -99,6 +160,45 @@ function SectorsContent() {
               <textarea placeholder="Description (optional)" rows={3} value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-ring" />
+
+              <div className="border border-gray-200 rounded-md p-3 space-y-2">
+                <h4 className="text-sm font-semibold text-gray-900">Sector Parameters: Mandatory Documents</h4>
+                <p className="text-xs text-gray-500">
+                  Mark documents that should always be mandatory for this sector.
+                </p>
+
+                <input
+                  value={ruleSearch}
+                  onChange={(e) => setRuleSearch(e.target.value)}
+                  placeholder="Search document type..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus-ring"
+                />
+
+                {loadingRules ? (
+                  <LoadingSpinner className="py-4" />
+                ) : (
+                  <div className="max-h-52 overflow-y-auto border border-gray-100 rounded-md divide-y divide-gray-100">
+                    {filteredCatalog.map((item) => (
+                      <label key={item.key} className="flex items-start gap-2 p-2 text-sm cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(ruleMap[item.key])}
+                          onChange={() => toggleRule(item.key)}
+                          className="mt-0.5"
+                        />
+                        <span>
+                          <span className="text-gray-800">{item.label}</span>
+                          <span className="block text-xs text-gray-400">{item.key}</span>
+                        </span>
+                      </label>
+                    ))}
+                    {filteredCatalog.length === 0 && (
+                      <p className="p-3 text-xs text-gray-500">No matching document types</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>

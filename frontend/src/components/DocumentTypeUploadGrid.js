@@ -6,11 +6,13 @@ import { getDocumentTypeDefinitions } from "@/lib/documentTypes";
 export default function DocumentTypeUploadGrid({
   applicationId,
   categoryCode,
+  mineralType,
+  sectorRules,
   documents = [],
   canUpload = true,
   onUploadComplete,
 }) {
-  const definitions = getDocumentTypeDefinitions(categoryCode);
+  const definitions = getDocumentTypeDefinitions({ categoryCode, mineralType, sectorRules });
 
   return (
     <div className="grid md:grid-cols-2 gap-4">

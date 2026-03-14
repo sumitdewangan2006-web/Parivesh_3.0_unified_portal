@@ -114,6 +114,8 @@ function AppDetailContent() {
               <dt className="text-gray-500">Location</dt><dd>{app.project_location || "—"}</dd>
               <dt className="text-gray-500">State</dt><dd>{app.project_state || "—"}</dd>
               <dt className="text-gray-500">District</dt><dd>{app.project_district || "—"}</dd>
+              <dt className="text-gray-500">Khasra No.</dt><dd>{app.khasra_no || "—"}</dd>
+              <dt className="text-gray-500">Lease Area</dt><dd>{app.lease_area ? `${app.lease_area} ha` : "—"}</dd>
               <dt className="text-gray-500">Est. Cost</dt><dd>{app.estimated_cost ? `₹${Number(app.estimated_cost).toLocaleString("en-IN")}` : "—"}</dd>
               <dt className="text-gray-500">Area</dt><dd>{app.project_area ? `${app.project_area} ha` : "—"}</dd>
             </dl>
@@ -261,6 +263,46 @@ function AppDetailContent() {
                         </div>
                       )}
                     </dl>
+                  </div>
+                )}
+
+                {Array.isArray(risk.document_verification) && risk.document_verification.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Document Content Verification</p>
+                    <ul className="space-y-1.5 max-h-52 overflow-auto pr-1">
+                      {risk.document_verification.slice(0, 8).map((item) => (
+                        <li key={item.id || `${item.document_type}-${item.original_name}`} className="text-xs border border-gray-200 rounded p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-gray-700 truncate">
+                              {item.document_type || "document"}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded-full font-semibold ${
+                                item.status === "satisfied"
+                                  ? "bg-green-100 text-green-700"
+                                  : item.status === "insufficient"
+                                    ? "bg-red-100 text-red-700"
+                                    : item.status === "not_verified"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              {item.status === "satisfied"
+                                ? "Satisfied"
+                                : item.status === "insufficient"
+                                  ? "Insufficient"
+                                  : item.status === "not_verified"
+                                    ? "Not Verified"
+                                    : "Not Checked"}
+                            </span>
+                          </div>
+                          {item.score !== null && item.score !== undefined && (
+                            <p className="text-[11px] text-gray-500 mt-0.5">Content score: {item.score}%</p>
+                          )}
+                          {item.message && <p className="text-[11px] text-gray-500 mt-0.5">{item.message}</p>}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>

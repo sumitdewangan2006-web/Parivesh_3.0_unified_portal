@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sys
+import datetime as dt
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
@@ -38,6 +39,41 @@ KEYWORD_PATTERNS: Dict[str, re.Pattern[str]] = {
     "groundwater usage": re.compile(
         r"\b(groundwater|aquifer|borewell|water extraction|water withdrawal)\b", re.IGNORECASE
     ),
+}
+
+DOCUMENT_CONTENT_RULES: Dict[str, Dict[str, Any]] = {
+    "pre_feasibility_report": {
+        "required_keywords": ["project", "baseline", "environment", "impact"],
+        "min_matches": 3,
+    },
+    "emp": {
+        "required_keywords": ["mitigation", "monitoring", "environment", "management plan"],
+        "min_matches": 3,
+    },
+    "form_caf": {
+        "required_keywords": ["form", "applicant", "project", "location"],
+        "min_matches": 3,
+    },
+    "eia_report": {
+        "required_keywords": ["impact", "baseline", "mitigation", "public hearing"],
+        "min_matches": 3,
+    },
+    "project_report": {
+        "required_keywords": ["project", "capacity", "location", "environment"],
+        "min_matches": 3,
+    },
+    "land_documents": {
+        "required_keywords": ["khasra", "land", "ownership", "survey"],
+        "min_matches": 2,
+    },
+    "all_affidavits": {
+        "required_keywords": ["affidavit", "undertake", "declare", "compliance"],
+        "min_matches": 2,
+    },
+    "gist_submission": {
+        "required_keywords": ["gist", "submission", "project"],
+        "min_matches": 2,
+    },
 }
 
 LINE_SPLIT_PATTERN = re.compile(r"[\r\n]+")
@@ -154,6 +190,111 @@ def read_pdf_text(file_paths: List[str], max_pages: int = 25, max_chars: int = 1
             continue
 
     return "\n".join(chunks)[:max_chars]
+
+
+def read_pdf_text_single(file_path: str, max_pages: int = 15, max_chars: int = 30000) -> str:
+    if PdfReader is None:
+        return ""
+    if not file_path or not os.path.exists(file_path):
+        return ""
+
+    chunks: List[str] = []
+    collected = 0
+    try:
+        reader = PdfReader(file_path)
+        for index, page in enumerate(reader.pages):
+            if index >= max_pages:
+                break
+            text = (page.extract_text() or "").strip()
+            if not text:
+                continue
+            chunks.append(text)
+            collected += len(text)
+            if collected >= max_chars:
+                break
+    except Exception:
+        return ""
+
+    return "\n".join(chunks)[:max_chars]
+
+
+def evaluate_document_content(doc: Dict[str, Any], extracted_text: str) -> Dict[str, Any]:
+    doc_type = str(doc.get("document_type") or "").lower()
+    rule = DOCUMENT_CONTENT_RULES.get(doc_type)
+
+    if not rule:
+        return {
+            "id": doc.get("id"),
+            "document_type": doc.get("document_type"),
+            "original_name": doc.get("original_name"),
+            "status": "not_checked",
+            "score": None,
+            "required_keywords": [],
+            "matched_keywords": [],
+            "missing_keywords": [],
+            "message": "No content rule configured for this document type.",
+        }
+
+    metadata_text = " ".join(
+        [
+            str(doc.get("original_name") or ""),
+            str(doc.get("tag") or ""),
+            str(doc.get("document_type") or ""),
+        ]
+    )
+    corpus = f"{metadata_text}\n{extracted_text or ''}".lower()
+
+    required_keywords = [str(k).strip().lower() for k in rule.get("required_keywords", []) if str(k).strip()]
+    if not required_keywords:
+        return {
+            "id": doc.get("id"),
+            "document_type": doc.get("document_type"),
+            "original_name": doc.get("original_name"),
+            "status": "not_checked",
+            "score": None,
+            "required_keywords": [],
+            "matched_keywords": [],
+            "missing_keywords": [],
+            "message": "Rule is empty for this document type.",
+        }
+
+    matched_keywords = [kw for kw in required_keywords if re.search(rf"\b{re.escape(kw)}\b", corpus, re.IGNORECASE)]
+    missing_keywords = [kw for kw in required_keywords if kw not in matched_keywords]
+
+    min_matches = int(rule.get("min_matches") or len(required_keywords))
+    min_matches = max(1, min(min_matches, len(required_keywords)))
+
+    if not extracted_text and not metadata_text.strip():
+        return {
+            "id": doc.get("id"),
+            "document_type": doc.get("document_type"),
+            "original_name": doc.get("original_name"),
+            "status": "not_verified",
+            "score": None,
+            "required_keywords": required_keywords,
+            "matched_keywords": [],
+            "missing_keywords": required_keywords,
+            "message": "Document text could not be extracted for verification.",
+        }
+
+    score = int(round((len(matched_keywords) / len(required_keywords)) * 100))
+    satisfied = len(matched_keywords) >= min_matches
+
+    return {
+        "id": doc.get("id"),
+        "document_type": doc.get("document_type"),
+        "original_name": doc.get("original_name"),
+        "status": "satisfied" if satisfied else "insufficient",
+        "score": score,
+        "required_keywords": required_keywords,
+        "matched_keywords": matched_keywords,
+        "missing_keywords": missing_keywords,
+        "message": (
+            "Document appears to satisfy expected content markers."
+            if satisfied
+            else f"Missing expected markers: {', '.join(missing_keywords[:4])}."
+        ),
+    }
 
 
 def fallback_summary(text: str, project_name: str) -> str:
@@ -370,6 +511,13 @@ def analyze(payload: Dict[str, Any]) -> Dict[str, Any]:
     if pdf_text:
         text_parts.append(pdf_text)
 
+    document_verification: List[Dict[str, Any]] = []
+    for doc in docs:
+        is_pdf = str(doc.get("mime_type", "")).lower().find("pdf") >= 0
+        file_path = str(doc.get("file_path") or "")
+        per_doc_text = read_pdf_text_single(file_path) if is_pdf and file_path else ""
+        document_verification.append(evaluate_document_content(doc, per_doc_text))
+
     corpus = "\n".join(part for part in text_parts if part).strip()
 
     score = 20.0
@@ -422,9 +570,6 @@ def analyze(payload: Dict[str, Any]) -> Dict[str, Any]:
     elif project_area > 10:
         score += 4
 
-    score_value = clamp_score(score)
-    risk_level = classify_risk(score_value)
-
     if not reasons and keyword_hits:
         top_keywords = [item["keyword"] for item in sorted(keyword_hits, key=lambda x: x["contribution"], reverse=True)[:3]]
         reasons.extend([f"Risk indicators detected: {label}" for label in top_keywords])
@@ -432,13 +577,32 @@ def analyze(payload: Dict[str, Any]) -> Dict[str, Any]:
     if not reasons:
         reasons.append("No major environmental risk triggers found in the parsed content.")
 
+    checked_docs = [d for d in document_verification if d.get("status") in {"satisfied", "insufficient"}]
+    satisfied_docs = [d for d in checked_docs if d.get("status") == "satisfied"]
+    insufficient_docs = [d for d in checked_docs if d.get("status") == "insufficient"]
+    not_verified_docs = [d for d in document_verification if d.get("status") == "not_verified"]
+
+    if insufficient_docs:
+        penalty = min(20, len(insufficient_docs) * 6)
+        score += penalty
+        reasons.append(
+            f"{len(insufficient_docs)} document(s) may be insufficient against expected content markers."
+        )
+
     summary_text, summary_source = llm_summary(corpus, project_name, category_name, sector_name)
+
+    score_value = clamp_score(score)
+    risk_level = classify_risk(score_value)
 
     extracted_metrics = {
         "wildlife_distance_km": wildlife_km,
         "groundwater_usage_kld": round(groundwater_kld, 2) if groundwater_kld is not None else None,
         "deforestation_area_ha": round(deforestation_ha, 2) if deforestation_ha is not None else None,
         "pdf_text_extracted": bool(pdf_text),
+        "docs_checked_for_content": len(checked_docs),
+        "docs_satisfied": len(satisfied_docs),
+        "docs_insufficient": len(insufficient_docs),
+        "docs_not_verified": len(not_verified_docs),
     }
 
     return {
@@ -458,8 +622,9 @@ def analyze(payload: Dict[str, Any]) -> Dict[str, Any]:
             }
             for d in docs
         ],
+        "document_verification": document_verification,
         "source": f"python-llm-analyzer-v1/{summary_source}",
-        "generated_at": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+        "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
     }
 
 

@@ -6,7 +6,9 @@ jest.mock("../src/models", () => ({
   Sector: {},
   User: {},
   Role: {},
-  Document: {},
+  Document: {
+    findAll: jest.fn(),
+  },
   StatusHistory: {
     create: jest.fn(),
   },
@@ -17,7 +19,7 @@ jest.mock("../src/models", () => ({
 }));
 
 const ApplicationService = require("../src/services/applicationService");
-const { Application, Payment, StatusHistory } = require("../src/models");
+const { Application, Document, Payment, StatusHistory } = require("../src/models");
 
 describe("ApplicationService.submit", () => {
   beforeEach(() => {
@@ -38,6 +40,29 @@ describe("ApplicationService.submit", () => {
     await expect(ApplicationService.submit("app-1", "user-1")).rejects.toMatchObject({
       message: "Payment must be completed before submitting the application",
       status: 400,
+    });
+
+    expect(app.save).not.toHaveBeenCalled();
+    expect(StatusHistory.create).not.toHaveBeenCalled();
+  });
+
+  test("blocks submission when required checklist documents are missing", async () => {
+    const app = {
+      id: "app-2",
+      applicant_id: "user-1",
+      status: "draft",
+      mineral_type: "others",
+      save: jest.fn(),
+    };
+
+    Application.findByPk.mockResolvedValue(app);
+    Payment.findOne.mockResolvedValue({ id: "payment-1", status: "completed" });
+    Document.findAll.mockResolvedValue([]);
+
+    await expect(ApplicationService.submit("app-2", "user-1")).rejects.toMatchObject({
+      message: expect.stringContaining("Required checklist documents are missing"),
+      status: 400,
+      code: "CHECKLIST_INCOMPLETE",
     });
 
     expect(app.save).not.toHaveBeenCalled();

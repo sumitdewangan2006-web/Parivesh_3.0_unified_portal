@@ -1,6 +1,6 @@
 "use client";
 
-// ── Proponent: Document Management Page ──────────────────────────────
+// Proponent: Document Management Page
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -19,6 +19,7 @@ function DocumentsContent() {
   const router = useRouter();
   const [app, setApp] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [sectorRules, setSectorRules] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
@@ -29,6 +30,13 @@ function DocumentsContent() {
       ]);
       setApp(appRes.data);
       setDocuments(sortDocumentsByTypeOrder(docsRes.data));
+
+      if (appRes.data?.sector_id) {
+        const { data: rules } = await api.get(`/config/sectors/${appRes.data.sector_id}/document-rules`);
+        setSectorRules(rules || []);
+      } else {
+        setSectorRules([]);
+      }
     } catch {
       toast.error("Failed to load data");
     } finally {
@@ -36,11 +44,12 @@ function DocumentsContent() {
     }
   };
 
-  useEffect(() => { loadData(); }, [id]);
+  useEffect(() => {
+    loadData();
+  }, [id]);
 
   const handleUploadComplete = (newDoc) => {
     setDocuments((prev) => {
-      // Replace superseded versions
       const updated = prev.map((d) =>
         d.document_type === newDoc.document_type && d.id !== newDoc.id
           ? { ...d, is_active: false }
@@ -61,14 +70,17 @@ function DocumentsContent() {
 
   return (
     <>
-      <PageHeader title="Documents" subtitle={`${app.reference_number || "Draft"} — ${app.project_name}`}>
-        <button onClick={() => router.back()}
-          className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">← Back</button>
+      <PageHeader title="Documents" subtitle={`${app.reference_number || "Draft"} - ${app.project_name}`}>
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          Back
+        </button>
       </PageHeader>
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Upload Section */}
           {canUpload && (
             <div className="card">
               <h3 className="font-semibold text-gray-900 mb-3">Upload by Document Type</h3>
@@ -78,6 +90,8 @@ function DocumentsContent() {
               <DocumentTypeUploadGrid
                 applicationId={id}
                 categoryCode={app.category?.code}
+                mineralType={app.mineral_type}
+                sectorRules={sectorRules}
                 documents={documents}
                 canUpload={canUpload}
                 onUploadComplete={handleUploadComplete}
@@ -85,13 +99,16 @@ function DocumentsContent() {
             </div>
           )}
 
-          {/* Required Documents Checklist */}
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-3">Document Checklist</h3>
-            <DocumentChecklist documents={documents} categoryCode={app.category?.code} />
+            <DocumentChecklist
+              documents={documents}
+              categoryCode={app.category?.code}
+              mineralType={app.mineral_type}
+              sectorRules={sectorRules}
+            />
           </div>
 
-          {/* All Documents */}
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-3">Uploaded Documents ({documents.length})</h3>
             <DocumentList
@@ -114,7 +131,11 @@ function DocumentsContent() {
               </div>
               <div>
                 <dt className="text-gray-500">Category</dt>
-                <dd>{app.category?.code} — {app.category?.name}</dd>
+                <dd>{app.category?.code} - {app.category?.name}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Mineral / Project Type</dt>
+                <dd className="capitalize">{(app.mineral_type || "-").replace(/_/g, " ")}</dd>
               </div>
               <div>
                 <dt className="text-gray-500">Total Documents</dt>
@@ -133,9 +154,10 @@ function DocumentsContent() {
   );
 }
 
-// ── Document Checklist ───────────────────────────────────────────────
-function DocumentChecklist({ documents, categoryCode }) {
-  const requiredDocs = getDocumentTypeDefinitions(categoryCode).filter((doc) => doc.value !== "additional_document");
+function DocumentChecklist({ documents, categoryCode, mineralType, sectorRules }) {
+  const requiredDocs = getDocumentTypeDefinitions({ categoryCode, mineralType, sectorRules }).filter(
+    (doc) => doc.value !== "additional_document"
+  );
 
   const uploadedTypes = new Set(documents.map((d) => d.document_type));
 
@@ -145,20 +167,30 @@ function DocumentChecklist({ documents, categoryCode }) {
         const uploaded = uploadedTypes.has(doc.value);
         return (
           <li key={doc.value} className="flex items-center gap-2 text-sm">
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-              uploaded ? "bg-green-100 text-green-600" : doc.required ? "bg-red-100 text-red-500" : "bg-gray-100 text-gray-400"
-            }`}>
-              {uploaded ? "✓" : doc.required ? "!" : "—"}
+            <span
+              className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                uploaded
+                  ? "bg-green-100 text-green-600"
+                  : doc.required
+                    ? "bg-red-100 text-red-500"
+                    : "bg-gray-100 text-gray-400"
+              }`}
+            >
+              {uploaded ? "✓" : doc.required ? "!" : "-"}
             </span>
-            <span className={uploaded ? "text-gray-700" : doc.required ? "text-gray-900 font-medium" : "text-gray-500"}>
+            <span
+              className={
+                uploaded
+                  ? "text-gray-700"
+                  : doc.required
+                    ? "text-gray-900 font-medium"
+                    : "text-gray-500"
+              }
+            >
               {doc.label}
             </span>
-            {doc.required && !uploaded && (
-              <span className="text-xs text-red-500">Required</span>
-            )}
-            {uploaded && (
-              <span className="text-xs text-green-600">Uploaded</span>
-            )}
+            {doc.required && !uploaded && <span className="text-xs text-red-500">Required</span>}
+            {uploaded && <span className="text-xs text-green-600">Uploaded</span>}
           </li>
         );
       })}
@@ -169,7 +201,9 @@ function DocumentChecklist({ documents, categoryCode }) {
 export default function ProponentDocumentsPage() {
   return (
     <ProtectedRoute allowedRoles={["project_proponent"]}>
-      <DashboardLayout><DocumentsContent /></DashboardLayout>
+      <DashboardLayout>
+        <DocumentsContent />
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }

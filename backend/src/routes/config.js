@@ -29,6 +29,64 @@ router.get("/sectors", async (_req, res, next) => {
   }
 });
 
+// ── Public: List mineral types ───────────────────────────────────────
+router.get("/mineral-types", (_req, res) => {
+  res.json(ConfigService.getMineralTypes());
+});
+
+// ── Public: Get document checklist for a mineral/project type ────────
+router.get("/checklists/:mineralType", (req, res) => {
+  const { mineralType } = req.params;
+  const checklist = ConfigService.getChecklist(mineralType);
+  if (!checklist.length) {
+    return res.status(404).json({ error: "No checklist found for the specified mineral type" });
+  }
+  res.json(checklist);
+});
+
+// ── Public: Effective checklist for mineral type + sector rules ─────
+router.get("/sectors/:id/checklists/:mineralType", async (req, res, next) => {
+  try {
+    const checklist = await ConfigService.getChecklistForSector(
+      req.params.mineralType,
+      Number(req.params.id)
+    );
+    if (!checklist.length) {
+      return res.status(404).json({ error: "No checklist found for the specified mineral type" });
+    }
+    res.json(checklist);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── Public: Master document key catalog for admin sector rules UI ───
+router.get("/document-catalog", (_req, res) => {
+  res.json(ConfigService.getDocumentCatalog());
+});
+
+// ── Public: View active sector document rules ───────────────────────
+router.get("/sectors/:id/document-rules", async (req, res, next) => {
+  try {
+    const rules = await ConfigService.listSectorDocumentRules(Number(req.params.id));
+    res.json(rules);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── Public: Get affidavit points for a mineral/project type ──────────
+router.get("/affidavits/:mineralType", (req, res) => {
+  const { mineralType } = req.params;
+  const points = ConfigService.getAffidavits(mineralType);
+  res.json(points);
+});
+
+// ── Public: Get all standard EDS points ─────────────────────────────
+router.get("/eds-points", (_req, res) => {
+  res.json(ConfigService.getEdsPoints());
+});
+
 // ── Admin-only routes below ──────────────────────────────────────────
 
 // Create category
@@ -94,6 +152,31 @@ router.put(
     try {
       const sector = await ConfigService.updateSector(req.params.id, req.body);
       res.json(sector);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Replace sector document rules (source-of-truth payload)
+router.put(
+  "/sectors/:id/document-rules",
+  authenticate,
+  authorize("admin"),
+  validate([
+    param("id").isInt(),
+    body("rules").isArray(),
+    body("rules.*.document_key").isString().notEmpty(),
+    body("rules.*.is_required").isBoolean(),
+  ]),
+  async (req, res, next) => {
+    try {
+      const saved = await ConfigService.upsertSectorDocumentRules(
+        Number(req.params.id),
+        req.body.rules,
+        req.user.id
+      );
+      res.json(saved);
     } catch (err) {
       next(err);
     }

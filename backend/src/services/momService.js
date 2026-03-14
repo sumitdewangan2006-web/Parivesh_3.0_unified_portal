@@ -10,6 +10,7 @@ const {
   ApplicationCategory,
   Sector,
 } = require("../models");
+const { transition } = require("./statusTransitionService");
 
 class MomService {
   // ── Create a new meeting ─────────────────────────────
@@ -40,24 +41,38 @@ class MomService {
       const app = await Application.findByPk(applicationIds[i]);
       if (!app) continue;
 
+      if (app.status !== "referred") {
+        const err = new Error(`Application ${app.reference_number || app.id} must be in Referred status before adding to meeting`);
+        err.status = 400;
+        throw err;
+      }
+
+      const scrutinyPassed = await StatusHistory.findOne({
+        where: {
+          application_id: app.id,
+          to_status: "under_scrutiny",
+        },
+      });
+
+      if (!scrutinyPassed) {
+        const err = new Error(
+          `Linear workflow violation for ${app.reference_number || app.id}: application did not pass Under Scrutiny stage`
+        );
+        err.status = 400;
+        throw err;
+      }
+
       const [ma, created] = await MeetingApplication.findOrCreate({
         where: { meeting_id: meetingId, application_id: applicationIds[i] },
         defaults: { agenda_item_number: i + 1 },
       });
 
-      if (app.status === "referred") {
-        const prev = app.status;
-        app.status = "mom_generated";
-        await app.save();
-
-        await StatusHistory.create({
-          application_id: app.id,
-          changed_by: userId,
-          from_status: prev,
-          to_status: "mom_generated",
-          remarks: `Added to meeting: ${meeting.title}`,
-        });
-      }
+      await transition(
+        app.id,
+        "mom_generated",
+        userId,
+        `Added to meeting: ${meeting.title}`
+      );
 
       results.push(ma);
     }
@@ -75,7 +90,7 @@ class MomService {
     }
 
     // Lock finalized/published MoM from editing
-    if (meeting.status === "finalized" || meeting.status === "published") {
+    if (meeting.is_locked || meeting.status === "finalized" || meeting.status === "published") {
       const err = new Error("Cannot edit a finalized or published MoM. Minutes are locked.");
       err.status = 400;
       throw err;
@@ -97,7 +112,7 @@ class MomService {
       throw err;
     }
 
-    if (meeting.status === "finalized" || meeting.status === "published") {
+    if (meeting.is_locked || meeting.status === "finalized" || meeting.status === "published") {
       const err = new Error("Cannot record decisions on a finalized or published meeting");
       err.status = 400;
       throw err;
@@ -130,6 +145,7 @@ class MomService {
     }
 
     meeting.status = "finalized";
+    meeting.is_locked = true;
     meeting.published_at = new Date();
     await meeting.save();
 
@@ -166,6 +182,7 @@ class MomService {
     }
 
     meeting.status = "published";
+    meeting.is_locked = true;
     meeting.published_at = new Date();
     await meeting.save();
 

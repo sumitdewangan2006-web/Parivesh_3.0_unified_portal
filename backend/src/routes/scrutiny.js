@@ -11,6 +11,11 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize("scrutiny_team", "admin"));
 
+// ── EDS points library (from official checklist) ───────────────────
+router.get("/eds-points", (_req, res) => {
+  res.json(ScrutinyService.getEdsPoints());
+});
+
 // ── My assigned applications ─────────────────────────────────────────
 router.get(
   "/applications",

@@ -14,6 +14,9 @@ const {
   sequelize,
 } = require("../models");
 const EnvironmentalRiskService = require("./environmentalRiskService");
+const ChecklistValidationService = require("./checklistValidationService");
+
+const VALID_MINERAL_TYPES = ["sand", "limestone", "bricks", "stones", "infrastructure", "industry", "others"];
 
 class ApplicationService {
   // ── Generate unique reference number ─────────────────
@@ -44,12 +47,15 @@ class ApplicationService {
       applicant_id: applicantId,
       category_id: data.category_id,
       sector_id: data.sector_id,
+      mineral_type: data.mineral_type || null,
       project_name: data.project_name,
       project_description: data.project_description || null,
       project_location: data.project_location || null,
       project_state: data.project_state || null,
       project_district: data.project_district || null,
+      khasra_no: data.khasra_no || null,
       estimated_cost: data.estimated_cost || null,
+      lease_area: data.lease_area || null,
       project_area: data.project_area || null,
       current_step: 1,
       status: "draft",
@@ -89,11 +95,11 @@ class ApplicationService {
 
     const allowedFields = [
       "category_id", "sector_id", "project_name", "project_description",
-      "project_location", "project_state", "project_district",
-      "estimated_cost", "project_area", "current_step",
+      "project_location", "project_state", "project_district", "khasra_no",
+      "estimated_cost", "lease_area", "project_area", "current_step",
     ];
 
-    const numericFields = ["category_id", "sector_id", "estimated_cost", "project_area", "current_step"];
+    const numericFields = ["category_id", "sector_id", "estimated_cost", "lease_area", "project_area", "current_step"];
 
     for (const field of allowedFields) {
       if (data[field] !== undefined) {
@@ -104,6 +110,17 @@ class ApplicationService {
         }
         app[field] = value;
       }
+    }
+
+    // Validate and set mineral_type separately (string ENUM, not numeric)
+    if (data.mineral_type !== undefined) {
+      const mt = data.mineral_type === "" || data.mineral_type === null ? null : data.mineral_type;
+      if (mt !== null && !VALID_MINERAL_TYPES.includes(mt)) {
+        const err = new Error(`Invalid mineral_type. Must be one of: ${VALID_MINERAL_TYPES.join(", ")}`);
+        err.status = 400;
+        throw err;
+      }
+      app.mineral_type = mt;
     }
 
     await app.save();
@@ -145,6 +162,8 @@ class ApplicationService {
       }
     }
 
+    await ApplicationService.ensureChecklistDocumentsPresent(app);
+
     const prevStatus = app.status;
     app.status = "submitted";
     app.submitted_at = new Date();
@@ -165,6 +184,52 @@ class ApplicationService {
     );
 
     return result;
+  }
+
+  // ── Enforce required checklist documents before submission ─────────
+  static async ensureChecklistDocumentsPresent(app) {
+    if (!app.mineral_type || !VALID_MINERAL_TYPES.includes(app.mineral_type)) {
+      const err = new Error("Mineral / project type is required before submission");
+      err.status = 400;
+      throw err;
+    }
+
+    const effectiveChecklist = await ChecklistValidationService.getEffectiveChecklist(
+      app.mineral_type,
+      app.sector_id
+    );
+    const requiredItems = effectiveChecklist.filter((item) => item.required);
+    if (!effectiveChecklist.length || !requiredItems.length) return;
+
+    const activeDocuments = await Document.findAll({
+      where: { application_id: app.id, is_active: true },
+      attributes: ["document_type"],
+    });
+
+    const uploadedKeys = new Set(
+      activeDocuments
+        .map((doc) => doc.document_type)
+        .filter((key) => typeof key === "string" && key.trim() !== "")
+    );
+
+    const missingDocuments = requiredItems
+      .filter((item) => !uploadedKeys.has(item.key))
+      .map((item) => ({ key: item.key, label: item.label, sno: item.sno }));
+
+    if (missingDocuments.length) {
+      const err = new Error(
+        `Required checklist documents are missing (${missingDocuments.length} pending)`
+      );
+      err.status = 400;
+      err.code = "CHECKLIST_INCOMPLETE";
+      err.details = {
+        mineral_type: app.mineral_type,
+        missing_documents: missingDocuments,
+        total_required: requiredItems.length,
+        uploaded_required: requiredItems.length - missingDocuments.length,
+      };
+      throw err;
+    }
   }
 
   // ── Get environmental risk analysis for an application ───────────

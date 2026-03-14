@@ -15,6 +15,7 @@ const Payment = require("./Payment");
 const Meeting = require("./Meeting");
 const MeetingApplication = require("./MeetingApplication");
 const GistTemplate = require("./GistTemplate");
+const SectorDocumentRule = require("./SectorDocumentRule");
 
 // ── Role ↔ User ──────────────────────────────────────────────────────
 Role.hasMany(User, { foreignKey: "role_id", as: "users" });
@@ -91,6 +92,12 @@ GistTemplate.belongsTo(Sector, { foreignKey: "sector_id", as: "sector" });
 User.hasMany(GistTemplate, { foreignKey: "uploaded_by", as: "gistTemplates" });
 GistTemplate.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader" });
 
+// ── Sector ↔ Sector Document Rules ─────────────────────────────────
+Sector.hasMany(SectorDocumentRule, { foreignKey: "sector_id", as: "documentRules" });
+SectorDocumentRule.belongsTo(Sector, { foreignKey: "sector_id", as: "sector" });
+User.hasMany(SectorDocumentRule, { foreignKey: "created_by", as: "sectorDocumentRules" });
+SectorDocumentRule.belongsTo(User, { foreignKey: "created_by", as: "creator" });
+
 module.exports = {
   sequelize,
   Role,
@@ -105,4 +112,5 @@ module.exports = {
   Meeting,
   MeetingApplication,
   GistTemplate,
+  SectorDocumentRule,
 };

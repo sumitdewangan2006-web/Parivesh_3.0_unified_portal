@@ -19,6 +19,9 @@ router.post(
   validate([
     body("category_id").isInt().withMessage("Category is required"),
     body("sector_id").isInt().withMessage("Sector is required"),
+        body("mineral_type")
+          .isIn(["sand", "limestone", "bricks", "stones", "infrastructure", "industry", "others"])
+          .withMessage("Valid mineral_type is required"),
     body("project_name").trim().notEmpty().withMessage("Project name is required"),
   ]),
   async (req, res, next) => {

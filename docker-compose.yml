@@ -17,6 +17,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   # Backend API Server
   backend:
@@ -27,7 +28,8 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      AUTO_SYNC: "true"
+      AUTO_SYNC: "false"
+      MIGRATE_ON_START: "true"
       SEED_DEMO_DATA: "true"
       PORT: 5000
       DB_HOST: db
@@ -35,6 +37,8 @@ services:
       DB_NAME: parivesh_db
       DB_USER: parivesh_admin
       DB_PASSWORD: ${DB_PASSWORD:-parivesh_secure_2024}
+      DB_WAIT_MAX_ATTEMPTS: 30
+      DB_WAIT_DELAY_MS: 2000
       JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
       JWT_EXPIRY: 24h
       UPLOAD_DIR: /app/uploads
@@ -45,6 +49,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Frontend Next.js App
   frontend:
@@ -60,7 +70,14 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:

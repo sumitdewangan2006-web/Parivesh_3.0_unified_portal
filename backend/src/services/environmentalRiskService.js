@@ -53,6 +53,41 @@ const KEYWORD_RULES = [
   },
 ];
 
+const DOCUMENT_CONTENT_RULES = {
+  pre_feasibility_report: {
+    required_keywords: ["project", "baseline", "environment", "impact"],
+    min_matches: 3,
+  },
+  emp: {
+    required_keywords: ["mitigation", "monitoring", "environment", "management plan"],
+    min_matches: 3,
+  },
+  form_caf: {
+    required_keywords: ["form", "applicant", "project", "location"],
+    min_matches: 3,
+  },
+  eia_report: {
+    required_keywords: ["impact", "baseline", "mitigation", "public hearing"],
+    min_matches: 3,
+  },
+  project_report: {
+    required_keywords: ["project", "capacity", "location", "environment"],
+    min_matches: 3,
+  },
+  land_documents: {
+    required_keywords: ["khasra", "land", "ownership", "survey"],
+    min_matches: 2,
+  },
+  all_affidavits: {
+    required_keywords: ["affidavit", "undertake", "declare", "compliance"],
+    min_matches: 2,
+  },
+  gist_submission: {
+    required_keywords: ["gist", "submission", "project"],
+    min_matches: 2,
+  },
+};
+
 function countMatches(text, pattern) {
   const matches = text.match(pattern);
   return matches ? matches.length : 0;
@@ -133,6 +168,39 @@ function buildSummary({ level, score, topReasons, projectName }) {
   return `${lead} ${drivers}`;
 }
 
+function buildFallbackDocumentVerification(documents) {
+  return documents.map((doc) => {
+    const docType = String(doc.document_type || "").toLowerCase();
+    const rule = DOCUMENT_CONTENT_RULES[docType];
+
+    if (!rule) {
+      return {
+        id: doc.id,
+        document_type: doc.document_type,
+        original_name: doc.original_name,
+        status: "not_checked",
+        score: null,
+        required_keywords: [],
+        matched_keywords: [],
+        missing_keywords: [],
+        message: "No content rule configured for this document type.",
+      };
+    }
+
+    return {
+      id: doc.id,
+      document_type: doc.document_type,
+      original_name: doc.original_name,
+      status: "not_verified",
+      score: null,
+      required_keywords: rule.required_keywords,
+      matched_keywords: [],
+      missing_keywords: rule.required_keywords,
+      message: "Content verification skipped because Python document parser is unavailable.",
+    };
+  });
+}
+
 function executePython(command, args, stdinPayload, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["pipe", "pipe", "pipe"] });
@@ -190,6 +258,10 @@ class EnvironmentalRiskService {
   }
 
   static normalizePythonResult(result, app, documents) {
+    const documentVerification = Array.isArray(result.document_verification)
+      ? result.document_verification
+      : buildFallbackDocumentVerification(documents);
+
     return {
       application_id: app.id,
       reference_number: app.reference_number,
@@ -210,6 +282,7 @@ class EnvironmentalRiskService {
               tag: doc.tag,
               mime_type: doc.mime_type,
             })),
+      document_verification: documentVerification,
       source: result.source || "python-llm-analyzer-v1",
       generated_at: result.generated_at || new Date().toISOString(),
     };
@@ -383,6 +456,10 @@ class EnvironmentalRiskService {
       groundwater_usage_kld: groundwaterUseKld !== null ? Number(groundwaterUseKld.toFixed(2)) : null,
       deforestation_area_ha: deforestationAreaHa !== null ? Number(deforestationAreaHa.toFixed(2)) : null,
       pdf_text_extracted: false,
+      docs_checked_for_content: 0,
+      docs_satisfied: 0,
+      docs_insufficient: 0,
+      docs_not_verified: documents.length,
     };
 
     const rankedReasons = reasons
@@ -411,6 +488,7 @@ class EnvironmentalRiskService {
         tag: doc.tag,
         mime_type: doc.mime_type,
       })),
+      document_verification: buildFallbackDocumentVerification(documents),
       source: "rule-based-analyzer-v1",
       generated_at: new Date().toISOString(),
     };

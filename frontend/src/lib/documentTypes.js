@@ -1,4 +1,7 @@
-export const DOCUMENT_TYPES = [
+import { DOCUMENT_CHECKLISTS } from "@/lib/checklistData";
+
+// ── Legacy document types (kept for backward compatibility) ──────────
+const LEGACY_DOCUMENT_TYPES = [
   {
     value: "project_report",
     label: "Project Report",
@@ -49,12 +52,102 @@ export const DOCUMENT_TYPES = [
   },
 ];
 
+// ── New checklist-based document types ───────────────────────────────
+// Generate a deduplicated map from all checklist item keys.
+const checklistItems = Object.values(DOCUMENT_CHECKLISTS).flat();
+const checklistTypeMap = new Map();
+
+for (const item of checklistItems) {
+  if (!checklistTypeMap.has(item.key)) {
+    checklistTypeMap.set(item.key, {
+      value: item.key,
+      label: item.label,
+      description: "Checklist document required as per regulatory category guidance.",
+      // Requiredness is computed contextually in getDocumentTypeDefinitions.
+      isRequired: () => false,
+    });
+  }
+}
+
+// Keep legacy values too, so already-uploaded docs continue rendering.
+for (const legacy of LEGACY_DOCUMENT_TYPES) {
+  if (!checklistTypeMap.has(legacy.value)) {
+    checklistTypeMap.set(legacy.value, legacy);
+  }
+}
+
+export const DOCUMENT_TYPES = Array.from(checklistTypeMap.values());
+
 export const DOCUMENT_TYPE_LABELS = Object.fromEntries(
   DOCUMENT_TYPES.map((item) => [item.value, item.label])
 );
 
-export function getDocumentTypeDefinitions(categoryCode) {
-  return DOCUMENT_TYPES.map((item) => ({
+/**
+ * Returns document type definitions based on either:
+ * 1) mineral_type (preferred, checklist-driven), or
+ * 2) legacy categoryCode fallback.
+ *
+ * @param {string | object} input
+ */
+export function getDocumentTypeDefinitions(input) {
+  // Backward compatible signature support:
+  // old: getDocumentTypeDefinitions(categoryCode)
+  // new: getDocumentTypeDefinitions({ categoryCode, mineralType })
+  let categoryCode = input;
+  let mineralType = null;
+  let sectorRules = [];
+
+  if (input && typeof input === "object") {
+    categoryCode = input.categoryCode;
+    mineralType = input.mineralType;
+    sectorRules = Array.isArray(input.sectorRules) ? input.sectorRules : [];
+  }
+
+  const sectorRuleMap = new Map(
+    sectorRules
+      .filter((rule) => rule && typeof rule.document_key === "string")
+      .map((rule) => [rule.document_key, Boolean(rule.is_required)])
+  );
+
+  if (mineralType && DOCUMENT_CHECKLISTS[mineralType]) {
+    const base = DOCUMENT_CHECKLISTS[mineralType].map((item) => {
+      const meta = checklistTypeMap.get(item.key) || {
+        value: item.key,
+        label: item.label,
+        description: "Checklist document.",
+      };
+
+      return {
+        ...meta,
+        value: item.key,
+        label: item.label,
+        required: sectorRuleMap.has(item.key)
+          ? Boolean(sectorRuleMap.get(item.key))
+          : Boolean(item.required),
+      };
+    });
+
+    // Include admin-forced sector keys even if absent in mineral checklist.
+    for (const [documentKey, isRequired] of sectorRuleMap.entries()) {
+      if (base.some((item) => item.value === documentKey)) continue;
+      const meta = checklistTypeMap.get(documentKey) || {
+        value: documentKey,
+        label: DOCUMENT_TYPE_LABELS[documentKey] || documentKey,
+        description: "Sector-specific checklist document.",
+      };
+
+      base.push({
+        ...meta,
+        value: documentKey,
+        required: Boolean(isRequired),
+      });
+    }
+
+    return base;
+  }
+
+  // Legacy fallback for old category-code-only flows.
+  return LEGACY_DOCUMENT_TYPES.map((item) => ({
     ...item,
     required: item.isRequired(categoryCode),
   }));
@@ -64,8 +157,12 @@ export function sortDocumentsByTypeOrder(documents = []) {
   const orderMap = new Map(DOCUMENT_TYPES.map((item, index) => [item.value, index]));
 
   return [...documents].sort((left, right) => {
-    const leftOrder = orderMap.has(left.document_type) ? orderMap.get(left.document_type) : Number.MAX_SAFE_INTEGER;
-    const rightOrder = orderMap.has(right.document_type) ? orderMap.get(right.document_type) : Number.MAX_SAFE_INTEGER;
+    const leftOrder = orderMap.has(left.document_type)
+      ? orderMap.get(left.document_type)
+      : Number.MAX_SAFE_INTEGER;
+    const rightOrder = orderMap.has(right.document_type)
+      ? orderMap.get(right.document_type)
+      : Number.MAX_SAFE_INTEGER;
 
     if (leftOrder !== rightOrder) return leftOrder - rightOrder;
 

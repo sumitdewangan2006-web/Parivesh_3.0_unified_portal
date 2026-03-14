@@ -13,13 +13,16 @@ jest.mock("../src/models", () => ({
   Application: {
     findByPk: jest.fn(),
   },
+  Document: {
+    findAll: jest.fn(),
+  },
   StatusHistory: {
     create: jest.fn(),
   },
 }));
 
 const PaymentService = require("../src/services/paymentService");
-const { Payment, Application, StatusHistory } = require("../src/models");
+const { Payment, Application, Document, StatusHistory } = require("../src/models");
 
 describe("PaymentService.calculateFee", () => {
   test("returns INR 50,000 when cost is below 50 crore", () => {
@@ -53,11 +56,21 @@ describe("PaymentService.confirm", () => {
     const app = {
       id: "app-1",
       status: "draft",
+      mineral_type: "others",
       save: jest.fn().mockResolvedValue(undefined),
     };
 
     Payment.findByPk.mockResolvedValue(payment);
     Application.findByPk.mockResolvedValue(app);
+    Document.findAll.mockResolvedValue([
+      { document_type: "processing_fees" },
+      { document_type: "pre_feasibility_report" },
+      { document_type: "emp" },
+      { document_type: "form_caf" },
+      { document_type: "land_documents" },
+      { document_type: "all_affidavits" },
+      { document_type: "gist_submission" },
+    ]);
     StatusHistory.create.mockResolvedValue({});
 
     await PaymentService.confirm("pay-1", "user-1");

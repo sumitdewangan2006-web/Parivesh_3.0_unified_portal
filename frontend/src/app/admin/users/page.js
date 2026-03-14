@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import DataTable from "@/components/ui/DataTable";
 import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import AdminRoleManagementScreen from "@/components/AdminRoleManagementScreen";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -18,6 +19,7 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [filterRole, setFilterRole] = useState("");
   const [search, setSearch] = useState("");
+  const [switchingUserId, setSwitchingUserId] = useState(null);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -58,11 +60,14 @@ function UsersContent() {
 
   const changeRole = async (userId, roleName) => {
     try {
+      setSwitchingUserId(userId);
       await api.put(`/admin/users/${userId}/role`, { roleName });
       toast.success("Role updated");
       fetchUsers();
     } catch {
       toast.error("Failed to update role");
+    } finally {
+      setSwitchingUserId(null);
     }
   };
 
@@ -112,6 +117,12 @@ function UsersContent() {
           + Create User
         </button>
       </PageHeader>
+
+      <AdminRoleManagementScreen
+        users={users}
+        onRoleSwitch={changeRole}
+        switchingUserId={switchingUserId}
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">

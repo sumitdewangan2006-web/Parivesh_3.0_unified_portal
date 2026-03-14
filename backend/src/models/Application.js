@@ -35,6 +35,21 @@ const Application = sequelize.define(
       references: { model: "sectors", key: "id" },
     },
     // ── Project Details ──────────────────────────────────
+    // ── Mineral / Project Sub-Type ───────────────────────
+    mineral_type: {
+      type: DataTypes.ENUM(
+        "sand",
+        "limestone",
+        "bricks",
+        "stones",
+        "infrastructure",
+        "industry",
+        "others"
+      ),
+      allowNull: true,
+      comment: "Mineral or project sub-type used to determine required document checklist",
+    },
+    // ── Project Details ──────────────────────────────────
     project_name: {
       type: DataTypes.STRING(300),
       allowNull: false,
@@ -55,10 +70,20 @@ const Application = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+    khasra_no: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Khasra number(s) for the applied land parcel",
+    },
     estimated_cost: {
       type: DataTypes.DECIMAL(15, 2),
       allowNull: true,
       comment: "Estimated project cost in INR",
+    },
+    lease_area: {
+      type: DataTypes.DECIMAL(12, 4),
+      allowNull: true,
+      comment: "Lease area in hectares",
     },
     project_area: {
       type: DataTypes.DECIMAL(12, 4),

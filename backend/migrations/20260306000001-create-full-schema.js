@@ -56,6 +56,29 @@ module.exports = {
       updated_at: { type: Sequelize.DATE, defaultValue: Sequelize.fn("NOW") },
     });
 
+    // ── 4.1 Sector Document Rules ──────────────────────
+    await queryInterface.createTable("sector_document_rules", {
+      id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
+      sector_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: "sectors", key: "id" },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+      },
+      document_key: { type: Sequelize.STRING(100), allowNull: false },
+      is_required: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true },
+      is_active: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true },
+      created_by: {
+        type: Sequelize.UUID,
+        references: { model: "users", key: "id" },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+      created_at: { type: Sequelize.DATE, defaultValue: Sequelize.fn("NOW") },
+      updated_at: { type: Sequelize.DATE, defaultValue: Sequelize.fn("NOW") },
+    });
+
     // ── 5. Applications ──────────────────────────────────
     await queryInterface.createTable("applications", {
       id: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4, primaryKey: true },
@@ -86,9 +109,16 @@ module.exports = {
       project_location: { type: Sequelize.STRING(500) },
       project_state: { type: Sequelize.STRING(100) },
       project_district: { type: Sequelize.STRING(100) },
+      khasra_no: { type: Sequelize.STRING(255) },
       estimated_cost: { type: Sequelize.DECIMAL(15, 2) },
+      lease_area: { type: Sequelize.DECIMAL(12, 4) },
       project_area: { type: Sequelize.DECIMAL(12, 4) },
       current_step: { type: Sequelize.INTEGER, defaultValue: 1 },
+      mineral_type: {
+        type: Sequelize.ENUM("sand", "limestone", "bricks", "stones", "infrastructure", "industry", "others"),
+        allowNull: true,
+        comment: "Mineral or project sub-type for document checklist selection",
+      },
       status: {
         type: Sequelize.ENUM(
           "draft",
@@ -253,6 +283,7 @@ module.exports = {
         type: Sequelize.ENUM("draft", "finalized", "published"),
         defaultValue: "draft",
       },
+      is_locked: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
       published_at: { type: Sequelize.DATE },
       created_at: { type: Sequelize.DATE, defaultValue: Sequelize.fn("NOW") },
       updated_at: { type: Sequelize.DATE, defaultValue: Sequelize.fn("NOW") },
@@ -315,6 +346,11 @@ module.exports = {
     await queryInterface.addIndex("applications", ["applicant_id"]);
     await queryInterface.addIndex("applications", ["assigned_scrutiny_id"]);
     await queryInterface.addIndex("applications", ["assigned_mom_id"]);
+    await queryInterface.addIndex("sector_document_rules", ["sector_id"]);
+    await queryInterface.addIndex("sector_document_rules", ["sector_id", "document_key"], {
+      unique: true,
+      name: "sector_document_rules_sector_document_key_unique",
+    });
     await queryInterface.addIndex("documents", ["application_id"]);
     await queryInterface.addIndex("remarks", ["application_id"]);
     await queryInterface.addIndex("status_history", ["application_id"]);
@@ -331,6 +367,7 @@ module.exports = {
     await queryInterface.dropTable("remarks");
     await queryInterface.dropTable("documents");
     await queryInterface.dropTable("applications");
+    await queryInterface.dropTable("sector_document_rules");
     await queryInterface.dropTable("sectors");
     await queryInterface.dropTable("application_categories");
     await queryInterface.dropTable("users");

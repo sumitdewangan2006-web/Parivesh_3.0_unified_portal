@@ -45,7 +45,19 @@ function TemplatesContent() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", content: "", category_id: "", sector_id: "" });
+    setForm({
+      name: "",
+      content: [
+        "<h2>Meeting Gist</h2>",
+        "<p><strong>Project Name:</strong> {{project_name}}</p>",
+        "<p><strong>Sector:</strong> {{sector_name}}</p>",
+        "<p><strong>District:</strong> {{project_district}}</p>",
+        "<p><strong>Scrutiny Summary:</strong></p>",
+        "<pre>{{scrutiny_summary}}</pre>",
+      ].join("\n"),
+      category_id: "",
+      sector_id: "",
+    });
     setShowModal(true);
   };
 
@@ -130,6 +142,14 @@ function TemplatesContent() {
           <option value="">All Sectors</option>
           {sectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
+      </div>
+
+      <div className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
+        <p className="text-xs font-semibold text-indigo-900">Required Placeholder Support</p>
+        <p className="text-xs text-indigo-800 mt-1">
+          Ensure templates contain: {"{{project_name}}"}, {"{{sector_name}}"}, {"{{project_district}}"}, {"{{scrutiny_summary}}"}.
+          Additional supported placeholders include {"{{applicant_name}}"}, {"{{khasra_no}}"}, {"{{lease_area}}"}, {"{{reference_number}}"}.
+        </p>
       </div>
 
       {loading ? <LoadingSpinner className="py-20" /> : (

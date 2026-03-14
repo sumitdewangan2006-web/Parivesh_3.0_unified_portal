@@ -10,7 +10,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install dependencies first (cache layer)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Install Python dependencies for the analyzer
 COPY ai/requirements.txt ./ai/requirements.txt
@@ -21,7 +21,8 @@ COPY . .
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
+RUN chmod +x /app/scripts/docker-start.sh
 
 EXPOSE 5000
 
-CMD ["node", "src/app.js"]
+CMD ["/app/scripts/docker-start.sh"]

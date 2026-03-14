@@ -13,6 +13,8 @@ const {
   Document,
   GistTemplate,
 } = require("../models");
+const ChecklistValidationService = require("./checklistValidationService");
+const { getEdsPoints } = require("../config/checklistData");
 
 class ScrutinyService {
   // ── List applications assigned to a scrutiny officer ──
@@ -115,6 +117,29 @@ class ScrutinyService {
       throw err;
     }
 
+    const activeDocuments = await Document.findAll({
+      where: { application_id: app.id, is_active: true },
+      attributes: ["document_type"],
+    });
+
+    const missingDocuments = await ChecklistValidationService.getMissingRequiredDocuments({
+      mineralType: app.mineral_type,
+      sectorId: app.sector_id,
+      uploadedDocumentTypes: activeDocuments.map((doc) => doc.document_type),
+    });
+
+    if (missingDocuments.length) {
+      const err = new Error(
+        `All mandatory documents must be verified before referral (${missingDocuments.length} pending)`
+      );
+      err.status = 400;
+      err.code = "CHECKLIST_INCOMPLETE";
+      err.details = {
+        missing_documents: missingDocuments,
+      };
+      throw err;
+    }
+
     const prev = app.status;
     app.status = "referred";
     app.approved_at = new Date();
@@ -173,6 +198,17 @@ class ScrutinyService {
     }
 
     // Populate placeholders in the template content
+    const scrutinyRemarks = await Remark.findAll({
+      where: { application_id: app.id },
+      order: [["created_at", "ASC"]],
+    });
+
+    const scrutinySummary = scrutinyRemarks.length
+      ? scrutinyRemarks
+          .map((remark, index) => `${index + 1}. [${remark.remark_type.toUpperCase()}] ${remark.content}`)
+          .join("\n")
+      : "No scrutiny remarks recorded.";
+
     const placeholders = {
       "{{project_name}}": app.project_name || "",
       "{{reference_number}}": app.reference_number || "",
@@ -180,7 +216,9 @@ class ScrutinyService {
       "{{project_location}}": app.project_location || "",
       "{{project_state}}": app.project_state || "",
       "{{project_district}}": app.project_district || "",
+      "{{khasra_no}}": app.khasra_no || "",
       "{{estimated_cost}}": app.estimated_cost ? Number(app.estimated_cost).toLocaleString("en-IN") : "",
+      "{{lease_area}}": app.lease_area ? `${app.lease_area} hectares` : "",
       "{{project_area}}": app.project_area ? `${app.project_area} hectares` : "",
       "{{category_name}}": app.category ? app.category.name : "",
       "{{category_code}}": app.category ? app.category.code : "",
@@ -188,6 +226,7 @@ class ScrutinyService {
       "{{applicant_name}}": app.applicant ? app.applicant.name : "",
       "{{applicant_email}}": app.applicant ? app.applicant.email : "",
       "{{applicant_organization}}": app.applicant ? app.applicant.organization : "",
+      "{{scrutiny_summary}}": scrutinySummary,
       "{{date}}": new Date().toLocaleDateString("en-IN"),
     };
 
@@ -250,6 +289,10 @@ class ScrutinyService {
     });
 
     return app;
+  }
+
+  static getEdsPoints() {
+    return getEdsPoints();
   }
 }
 

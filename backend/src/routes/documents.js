@@ -37,7 +37,7 @@ router.post(
       }
       const doc = await DocumentService.upload(
         req.params.applicationId,
-        req.user.id,
+        req.user,
         req.file,
         {
           document_type: req.body.document_type,
@@ -57,7 +57,7 @@ router.get(
   validate([param("applicationId").isUUID()]),
   async (req, res, next) => {
     try {
-      const docs = await DocumentService.listByApplication(req.params.applicationId);
+      const docs = await DocumentService.listByApplication(req.params.applicationId, req.user);
       res.json(docs);
     } catch (err) {
       next(err);
@@ -71,7 +71,7 @@ router.get(
   validate([param("id").isUUID()]),
   async (req, res, next) => {
     try {
-      const doc = await DocumentService.findById(req.params.id);
+      const doc = await DocumentService.findById(req.params.id, req.user);
       res.download(doc.file_path, doc.original_name);
     } catch (err) {
       next(err);
@@ -85,7 +85,7 @@ router.get(
   validate([param("id").isUUID()]),
   async (req, res, next) => {
     try {
-      const doc = await DocumentService.findById(req.params.id);
+      const doc = await DocumentService.findById(req.params.id, req.user);
       const absolutePath = path.resolve(doc.file_path);
       res.setHeader("Content-Type", doc.mime_type || "application/octet-stream");
       res.setHeader("Content-Disposition", `inline; filename="${doc.original_name}"`);
@@ -104,7 +104,8 @@ router.get(
     try {
       const versions = await DocumentService.getVersionHistory(
         req.params.applicationId,
-        req.params.documentType
+        req.params.documentType,
+        req.user
       );
       res.json(versions);
     } catch (err) {
@@ -119,7 +120,7 @@ router.delete(
   validate([param("id").isUUID()]),
   async (req, res, next) => {
     try {
-      const doc = await DocumentService.softDelete(req.params.id, req.user.id);
+      const doc = await DocumentService.softDelete(req.params.id, req.user);
       res.json({ message: "Document removed", id: doc.id });
     } catch (err) {
       next(err);

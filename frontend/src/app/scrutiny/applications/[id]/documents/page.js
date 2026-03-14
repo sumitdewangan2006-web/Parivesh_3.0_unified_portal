@@ -18,6 +18,7 @@ function ScrutinyDocsContent() {
   const router = useRouter();
   const [app, setApp] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [sectorRules, setSectorRules] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +30,13 @@ function ScrutinyDocsContent() {
         ]);
         setApp(appRes.data);
         setDocuments(sortDocumentsByTypeOrder(docsRes.data));
+
+        if (appRes.data?.sector_id) {
+          const { data: rules } = await api.get(`/config/sectors/${appRes.data.sector_id}/document-rules`);
+          setSectorRules(rules || []);
+        } else {
+          setSectorRules([]);
+        }
       } catch {
         toast.error("Failed to load data");
       } finally {
@@ -41,7 +49,11 @@ function ScrutinyDocsContent() {
   if (loading) return <LoadingSpinner className="py-20" />;
   if (!app) return <p className="text-center py-20 text-gray-500">Application not found</p>;
 
-  const definitions = getDocumentTypeDefinitions(app.category?.code);
+  const definitions = getDocumentTypeDefinitions({
+    categoryCode: app.category?.code,
+    mineralType: app.mineral_type,
+    sectorRules,
+  });
   const grouped = {};
   documents.forEach((d) => {
     if (!grouped[d.document_type]) grouped[d.document_type] = [];

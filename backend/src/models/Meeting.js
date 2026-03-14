@@ -43,6 +43,12 @@ const Meeting = sequelize.define(
       type: DataTypes.ENUM("draft", "finalized", "published"),
       defaultValue: "draft",
     },
+    is_locked: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      comment: "True once meeting minutes are finalized/published and should not be editable",
+    },
     published_at: {
       type: DataTypes.DATE,
       allowNull: true,

@@ -139,7 +139,7 @@ function MeetingDetailContent() {
   const isDraft = meeting.status === "draft";
   const isFinalized = meeting.status === "finalized";
   const isPublished = meeting.status === "published";
-  const isLocked = isFinalized || isPublished;
+  const isLocked = Boolean(meeting.is_locked) || isFinalized || isPublished;
   const applications = meeting.applications || [];
 
   return (
@@ -299,6 +299,15 @@ function MeetingDetailContent() {
               {isFinalized && <p className="text-gray-500">Review the minutes and publish when ready. MoM is locked.</p>}
               {isPublished && <p className="text-green-600 font-medium">✓ Meeting published &amp; MoM finalized successfully</p>}
               {isLocked && <p className="text-red-500 text-xs mt-2">🔒 Editing is locked after finalization.</p>}
+
+              <a
+                href="https://sites.google.com/view/ec-tor-form-submission/gist-submission-page"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex mt-2 px-3 py-2 text-xs font-medium rounded-md border border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
+              >
+                Open Mandatory Gist Submission Link
+              </a>
             </div>
           </div>
         </div>

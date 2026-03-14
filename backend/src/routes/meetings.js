@@ -3,7 +3,7 @@
 
 const express = require("express");
 const { body, param, query } = require("express-validator");
-const { authenticate, authorize, validate } = require("../middleware");
+const { authenticate, authorize, ensureLinearWorkflowForMom, validate } = require("../middleware");
 const MomService = require("../services/momService");
 const ExportService = require("../services/exportService");
 
@@ -70,6 +70,7 @@ router.get(
 // ── Add applications to meeting ──────────────────────────────────────
 router.post(
   "/:id/applications",
+  ensureLinearWorkflowForMom,
   validate([
     param("id").isUUID(),
     body("application_ids").isArray({ min: 1 }).withMessage("At least one application ID"),
@@ -135,7 +136,7 @@ router.post(
   validate([param("id").isUUID()]),
   async (req, res, next) => {
     try {
-      const meeting = await MomService.finalize(req.params.id);
+      const meeting = await MomService.finalize(req.params.id, req.user.id);
       res.json(meeting);
     } catch (err) {
       next(err);
