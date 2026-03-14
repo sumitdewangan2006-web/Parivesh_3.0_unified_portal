@@ -4,13 +4,15 @@ A production-ready web portal that manages the complete lifecycle of Environment
 
 Built for the **PARIVESH 3.0 Government Hackathon**.
 
+Current documentation snapshot: **March 14, 2026**.
+
 ---
 
 ## Tech Stack
 
 | Layer            | Technology                                      |
 | ---------------- | ----------------------------------------------- |
-| Frontend         | React 18 + Next.js 14 (App Router) + TailwindCSS |
+| Frontend         | React 18.3 + Next.js 14.2 (App Router) + TailwindCSS |
 | Backend          | Node.js 20 + Express 4 + Sequelize 6 ORM       |
 | Database         | PostgreSQL 16                                   |
 | Authentication   | JWT + Role-Based Access Control (RBAC)          |
@@ -219,7 +221,7 @@ git clone https://github.com/sumitdewangan2006-web/Parivesh_3.0_unified_portal
 cd Parivesh_3.0_unified_portal
 
 # Start all services (demo mode: Docker enables AUTO_SYNC and SEED_DEMO_DATA explicitly)
-docker-compose up --build
+docker compose up --build
 ```
 
 | Service   | URL                            |
@@ -233,7 +235,7 @@ docker-compose up --build
 
 ```bash
 # 1. Start PostgreSQL (Docker or local)
-docker-compose up db -d
+docker compose up db -d
 
 # 2. Backend
 cd backend
@@ -252,12 +254,19 @@ npm run dev                   # Starts on port 3000
 
 ### Demo Login
 
-| Role              | Email                      | Password    |
-| ----------------- | -------------------------- | ----------- |
-| Admin             | admin@parivesh.gov.in      | Admin@123   |
-| Project Proponent | proponent@parivesh.gov.in  | Admin@123   |
-| Scrutiny Team     | scrutiny@parivesh.gov.in   | Admin@123   |
-| MoM Team          | mom@parivesh.gov.in        | Admin@123   |
+The default password depends on how data was seeded:
+
+| Startup Path | Default Password |
+| ------------ | ---------------- |
+| Docker quick start (`AUTO_SYNC=true`, `SEED_DEMO_DATA=true`) | `Test@123` |
+| Local migration + `npm run seed` | `Admin@123` |
+
+| Role              | Email                      |
+| ----------------- | -------------------------- |
+| Admin             | admin@parivesh.gov.in      |
+| Project Proponent | proponent@parivesh.gov.in  |
+| Scrutiny Team     | scrutiny@parivesh.gov.in   |
+| MoM Team          | mom@parivesh.gov.in        |
 
 > Register new users via the registration page. Admin can change roles from the user management panel.
 
@@ -279,10 +288,17 @@ npm run dev                   # Starts on port 3000
 | POST   | `/api/auth/login`      | Login and get JWT      |
 | GET    | `/api/auth/me`         | Get current user       |
 | PUT    | `/api/auth/profile`    | Update profile         |
+| PUT    | `/api/auth/password`   | Change password        |
+
+### Health
+| Method | Endpoint            | Description              |
+| ------ | ------------------- | ------------------------ |
+| GET    | `/api/health`       | Service health check     |
 
 ### Applications
 | Method | Endpoint                               | Description                   |
 | ------ | -------------------------------------- | ----------------------------- |
+| GET    | `/api/applications`                    | List applications (admin/scrutiny/mom) |
 | GET    | `/api/applications/my`                 | List own applications         |
 | POST   | `/api/applications`                    | Create draft application      |
 | GET    | `/api/applications/:id`                | Get application details       |
@@ -293,9 +309,10 @@ npm run dev                   # Starts on port 3000
 ### Documents
 | Method | Endpoint                                          | Description              |
 | ------ | ------------------------------------------------- | ------------------------ |
-| POST   | `/api/documents/application/:id`                  | Upload document          |
+| POST   | `/api/documents/application/:applicationId`       | Upload document          |
+| GET    | `/api/documents/application/:applicationId`       | List documents for application |
 | GET    | `/api/documents/:id/download`                     | Download file            |
-| GET    | `/api/documents/application/:id/versions/:type`   | Version history          |
+| GET    | `/api/documents/application/:applicationId/versions/:documentType` | Version history |
 | DELETE | `/api/documents/:id`                              | Soft-delete document     |
 
 ### Scrutiny
@@ -304,18 +321,23 @@ npm run dev                   # Starts on port 3000
 | GET    | `/api/scrutiny/applications`                   | List assigned apps    |
 | GET    | `/api/scrutiny/applications/:id/remarks`       | Get remarks           |
 | POST   | `/api/scrutiny/applications/:id/remarks`       | Add remark/query      |
+| PUT    | `/api/scrutiny/remarks/:id/resolve`            | Resolve query         |
 | POST   | `/api/scrutiny/applications/:id/approve`       | Approve for meeting   |
 | POST   | `/api/scrutiny/applications/:id/send-back`     | Send back with query  |
 
 ### Meetings (MoM)
-| Method | Endpoint                                      | Description          |
-| ------ | --------------------------------------------- | -------------------- |
-| GET    | `/api/meetings`                               | List meetings        |
-| POST   | `/api/meetings`                               | Create meeting       |
-| GET    | `/api/meetings/:id`                           | Meeting details      |
-| POST   | `/api/meetings/:id/applications`              | Add app to meeting   |
-| PUT    | `/api/meetings/:id/finalize`                  | Finalize meeting     |
-| PUT    | `/api/meetings/:id/publish`                   | Publish MoM          |
+| Method | Endpoint                                      | Description              |
+| ------ | --------------------------------------------- | ------------------------ |
+| GET    | `/api/meetings`                               | List meetings            |
+| POST   | `/api/meetings`                               | Create meeting           |
+| GET    | `/api/meetings/:id`                           | Meeting details          |
+| PUT    | `/api/meetings/:id`                           | Update agenda/minutes    |
+| POST   | `/api/meetings/:id/applications`              | Add apps to meeting      |
+| PUT    | `/api/meetings/:id/applications/:applicationId/decision` | Record decision |
+| POST   | `/api/meetings/:id/finalize`                  | Finalize meeting         |
+| POST   | `/api/meetings/:id/publish`                   | Publish meeting/MoM      |
+| GET    | `/api/meetings/:id/export/docx`               | Export MoM as DOCX       |
+| GET    | `/api/meetings/:id/export/pdf`                | Export MoM as PDF        |
 
 ### Dashboard & Analytics
 | Method | Endpoint                          | Description                |
@@ -335,24 +357,42 @@ npm run dev                   # Starts on port 3000
 | Method | Endpoint                               | Description              |
 | ------ | -------------------------------------- | ------------------------ |
 | GET    | `/api/admin/users`                     | List all users           |
+| POST   | `/api/admin/users`                     | Create user              |
 | PUT    | `/api/admin/users/:id/role`            | Change user role         |
-| PUT    | `/api/admin/users/:id/toggle-active`   | Activate/deactivate user |
+| PUT    | `/api/admin/users/:id/status`          | Activate/deactivate user |
+| GET    | `/api/admin/roles`                     | List available roles     |
 | PUT    | `/api/applications/:id/assign-scrutiny`| Assign scrutiny officer  |
 | PUT    | `/api/applications/:id/assign-mom`     | Assign MoM officer       |
 
 ### Config
-| Method | Endpoint                  | Description          |
-| ------ | ------------------------- | -------------------- |
-| GET    | `/api/config/categories`  | List categories      |
-| GET    | `/api/config/sectors`     | List sectors         |
+| Method | Endpoint                         | Description                 |
+| ------ | -------------------------------- | --------------------------- |
+| GET    | `/api/config/categories`         | List categories (public)    |
+| POST   | `/api/config/categories`         | Create category (admin)     |
+| PUT    | `/api/config/categories/:id`     | Update category (admin)     |
+| GET    | `/api/config/sectors`            | List sectors (public)       |
+| POST   | `/api/config/sectors`            | Create sector (admin)       |
+| PUT    | `/api/config/sectors/:id`        | Update sector (admin)       |
+| GET    | `/api/config/templates`          | List templates (admin/scrutiny) |
+| POST   | `/api/config/templates`          | Create template (admin)     |
+| PUT    | `/api/config/templates/:id`      | Update template (admin)     |
+| DELETE | `/api/config/templates/:id`      | Delete template (admin)     |
 
 ### Payments
 | Method | Endpoint                                  | Description                              |
 | ------ | ----------------------------------------- | ---------------------------------------- |
+| GET    | `/api/payments/public/:id`                | Public payment details for mobile flow   |
+| POST   | `/api/payments/public/:id/pay`            | Public mock pay confirmation             |
 | GET    | `/api/payments/calculate-fee/:applicationId` | Calculate draft-stage EC fee from project cost |
 | POST   | `/api/payments/initiate`                  | Initiate mock UPI/QR payment for draft   |
 | POST   | `/api/payments/:id/confirm`               | Confirm payment and auto-submit draft    |
 | GET    | `/api/payments/application/:applicationId`| List payments for an application         |
+| GET    | `/api/payments`                           | List all payments (admin)                |
+
+### Workflow
+| Method | Endpoint                         | Description                 |
+| ------ | -------------------------------- | --------------------------- |
+| GET    | `/api/workflow/:applicationId`   | Workflow status by step     |
 
 ---
 
@@ -401,9 +441,13 @@ CORS_ORIGIN=http://localhost:3000
 
 `AUTO_SYNC` and `SEED_DEMO_DATA` are intended for controlled demo/local startup only. In production-like environments, keep both disabled and run migrations/seeding explicitly.
 
+Note: if `MAX_FILE_SIZE_MB` is omitted, runtime fallback in backend config is 50 MB.
+
 ### Frontend (`frontend/.env.local`)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
+# Optional for Docker/proxy route support
+BACKEND_INTERNAL_URL=http://backend:5000/api
 ```
 
 ---
@@ -414,9 +458,9 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 - **Role-Based Access Control** on every API route
 - **Helmet.js** security headers
 - **Rate Limiting** — 500 requests per 15 minutes per IP
-- **CORS** with configurable origin
+- **CORS** currently reflects requesting origins (use stricter origin policy for hardened deployment)
 - **Input Validation** via express-validator
-- **File Upload Restrictions** — MIME type whitelist, 10MB limit
+- **File Upload Restrictions** — MIME type whitelist, size controlled by `MAX_FILE_SIZE_MB`
 - **Password Hashing** — bcrypt with 12 salt rounds
 - **Soft Deletes** — documents are deactivated, not destroyed
 - **Audit Trail** — every status change logged with user & timestamp
