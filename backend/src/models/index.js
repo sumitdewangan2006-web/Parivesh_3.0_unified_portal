@@ -16,6 +16,7 @@ const Meeting = require("./Meeting");
 const MeetingApplication = require("./MeetingApplication");
 const GistTemplate = require("./GistTemplate");
 const SectorDocumentRule = require("./SectorDocumentRule");
+const CitizenObservation = require("./CitizenObservation");
 
 // ── Role ↔ User ──────────────────────────────────────────────────────
 Role.hasMany(User, { foreignKey: "role_id", as: "users" });
@@ -98,6 +99,10 @@ SectorDocumentRule.belongsTo(Sector, { foreignKey: "sector_id", as: "sector" });
 User.hasMany(SectorDocumentRule, { foreignKey: "created_by", as: "sectorDocumentRules" });
 SectorDocumentRule.belongsTo(User, { foreignKey: "created_by", as: "creator" });
 
+// ── Application ↔ Citizen Observations ─────────────────────────────
+Application.hasMany(CitizenObservation, { foreignKey: "application_id", as: "citizenObservations" });
+CitizenObservation.belongsTo(Application, { foreignKey: "application_id", as: "application" });
+
 module.exports = {
   sequelize,
   Role,
@@ -113,4 +118,5 @@ module.exports = {
   MeetingApplication,
   GistTemplate,
   SectorDocumentRule,
+  CitizenObservation,
 };

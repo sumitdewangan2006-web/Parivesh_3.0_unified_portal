@@ -15,6 +15,8 @@ import Link from "next/link";
 import { EDS_POINTS, MINERAL_TYPE_LABELS } from "@/lib/checklistData";
 import { getDocumentTypeDefinitions } from "@/lib/documentTypes";
 
+const PUBLIC_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
 function ReviewContent() {
   const { id } = useParams();
   const router = useRouter();
@@ -27,6 +29,9 @@ function ReviewContent() {
   const [sectorRules, setSectorRules] = useState([]);
   const [risk, setRisk] = useState(null);
   const [riskLoading, setRiskLoading] = useState(false);
+  const [citizenObservations, setCitizenObservations] = useState([]);
+  const [citizenLoading, setCitizenLoading] = useState(false);
+  const [moderatingObservationId, setModeratingObservationId] = useState(null);
 
   const [remarkType, setRemarkType] = useState("comment");
   const [remarkContent, setRemarkContent] = useState("");
@@ -69,6 +74,33 @@ function ReviewContent() {
     }
   };
 
+  const loadCitizenObservations = async (applicationId) => {
+    setCitizenLoading(true);
+    try {
+      const { data } = await api.get(`/citizen-audit/application/${applicationId}/observations`);
+      setCitizenObservations(Array.isArray(data.observations) ? data.observations : []);
+    } catch {
+      setCitizenObservations([]);
+    } finally {
+      setCitizenLoading(false);
+    }
+  };
+
+  const moderateCitizenObservation = async (observationId, status) => {
+    setModeratingObservationId(observationId);
+    try {
+      await api.put(`/citizen-audit/observations/${observationId}/status`, { status });
+      toast.success(`Observation marked as ${status}`);
+      if (app?.id) {
+        await loadCitizenObservations(app.id);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to update observation status");
+    } finally {
+      setModeratingObservationId(null);
+    }
+  };
+
   const load = async () => {
     try {
       const [appRes, remarkRes, histRes] = await Promise.all([
@@ -97,6 +129,7 @@ function ReviewContent() {
       }
 
       await loadRiskAnalysis(id);
+      await loadCitizenObservations(appRes.data.id);
     } catch {
       toast.error("Failed to load application");
     } finally {
@@ -227,6 +260,13 @@ function ReviewContent() {
           >
             Back
           </button>
+          <Link
+            href={`/citizen-audit/${encodeURIComponent(app.reference_number || "")}`}
+            target="_blank"
+            className="px-4 py-2 text-sm border border-emerald-300 text-emerald-700 rounded-md hover:bg-emerald-50"
+          >
+            Open Public Citizen Audit
+          </Link>
         </div>
       </PageHeader>
 
@@ -436,6 +476,96 @@ function ReviewContent() {
         </div>
 
         <div className="space-y-6">
+          <div className="card">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-900">Citizen Audit Feed</h3>
+              <button
+                onClick={() => app?.id && loadCitizenObservations(app.id)}
+                disabled={citizenLoading}
+                className="text-xs px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              >
+                {citizenLoading ? "Loading..." : "Refresh"}
+              </button>
+            </div>
+
+            {citizenLoading ? (
+              <p className="text-sm text-gray-500">Loading citizen observations...</p>
+            ) : citizenObservations.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No citizen observations have been submitted yet.
+              </p>
+            ) : (
+              <ul className="space-y-2 max-h-72 overflow-auto pr-1">
+                {citizenObservations.slice(0, 12).map((item) => (
+                  <li key={item.id} className="border border-gray-200 rounded p-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-gray-800 truncate">{item.citizen_name || "Anonymous Citizen"}</p>
+                      <span
+                        className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                          item.status === "published"
+                            ? "bg-green-100 text-green-700"
+                            : item.status === "flagged"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{item.observation_text}</p>
+
+                    {(item.latitude !== null || item.longitude !== null) && (
+                      <p className="text-[11px] text-gray-500 mt-1">Geo-tag: {item.latitude ?? "-"}, {item.longitude ?? "-"}</p>
+                    )}
+
+                    {Array.isArray(item.biodiversity_tags) && item.biodiversity_tags.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {item.biodiversity_tags.map((tag) => (
+                          <span key={`${item.id}-${tag}`} className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {item.photo_url && (
+                      <img
+                        src={`${PUBLIC_API_BASE}${item.photo_url}`}
+                        alt="Citizen observation"
+                        className="mt-2 max-h-32 rounded border border-gray-200 object-cover"
+                      />
+                    )}
+
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <button
+                        onClick={() => moderateCitizenObservation(item.id, "published")}
+                        disabled={moderatingObservationId === item.id}
+                        className="text-[11px] px-2 py-1 rounded border border-green-300 text-green-700 hover:bg-green-50 disabled:opacity-50"
+                      >
+                        Publish
+                      </button>
+                      <button
+                        onClick={() => moderateCitizenObservation(item.id, "flagged")}
+                        disabled={moderatingObservationId === item.id}
+                        className="text-[11px] px-2 py-1 rounded border border-amber-300 text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                      >
+                        Flag
+                      </button>
+                      <button
+                        onClick={() => moderateCitizenObservation(item.id, "removed")}
+                        disabled={moderatingObservationId === item.id}
+                        className="text-[11px] px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div className="card">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-900">AI Environmental Risk Analyzer</h3>

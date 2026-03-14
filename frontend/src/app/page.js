@@ -37,6 +37,7 @@ export default function HomePage() {
     { title: t("home.trackProposal"), href: "/auth/login", style: "primary" },
     { title: t("home.knowApproval"), href: "/auth/register", style: "secondary" },
     { title: t("home.openDashboard"), href: "/dashboard", style: "secondary" },
+    { title: "Citizen Audit", href: "/citizen-audit", style: "secondary" },
   ];
 
   const features = [

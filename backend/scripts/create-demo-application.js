@@ -13,6 +13,7 @@ const {
   Sector,
   Application,
   Document,
+  CitizenObservation,
   Payment,
   StatusHistory,
 } = require("../src/models");
@@ -219,6 +220,37 @@ async function main() {
     },
   ]);
 
+  await CitizenObservation.bulkCreate([
+    {
+      application_id: app.id,
+      citizen_name: "Village Environment Committee",
+      contact_email: "vec.demo@example.com",
+      observation_text:
+        "Community has observed seasonal migratory birds and wetland vegetation near the proposed project zone. Local biodiversity mapping should be included in clearance conditions.",
+      biodiversity_tags: "wetland,migratory birds,community biodiversity",
+      latitude: 21.2514,
+      longitude: 81.6296,
+      source: "citizen_audit",
+      status: "published",
+      submitted_ip: "127.0.0.1",
+      submitted_user_agent: "demo-seed-script",
+    },
+    {
+      application_id: app.id,
+      citizen_name: "Local Fisherfolk Association",
+      contact_email: "fisherfolk.demo@example.com",
+      observation_text:
+        "Riverbank nesting patches and fish breeding zones exist downstream of the project location. Monitoring and mitigation commitments should include these habitats.",
+      biodiversity_tags: "river ecosystem,fish breeding,riverbank nesting",
+      latitude: 21.2578,
+      longitude: 81.6212,
+      source: "citizen_audit",
+      status: "published",
+      submitted_ip: "127.0.0.1",
+      submitted_user_agent: "demo-seed-script",
+    },
+  ]);
+
   let riskScoreInfo = "Risk analyzer run skipped";
   try {
     const risk = await EnvironmentalRiskService.analyzeApplication(app.id);
@@ -233,6 +265,7 @@ async function main() {
   console.log(`Status: ${app.status}`);
   console.log(`Mineral Type: ${app.mineral_type}`);
   console.log(`Documents Uploaded: ${checklist.length}`);
+  console.log("Citizen Observations Added: 2");
   console.log(`Risk Analysis Snapshot: ${riskScoreInfo}`);
   console.log("\nUse these demo users:");
   console.log(`- Proponent: ${applicant.email}`);
