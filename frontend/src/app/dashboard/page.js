@@ -121,12 +121,22 @@ function DashboardContent() {
         title={`Welcome, ${user?.name}`}
         subtitle={`${user?.role?.name?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} Dashboard`}
       >
-        {isAdmin && (
-          <Link href="/admin/analytics"
-            className="px-4 py-2 text-sm bg-primary-600 text-white rounded-md hover:bg-primary-700 font-medium">
-            📊 Full Analytics
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/citizen-audit/projects"
+            className="px-4 py-2 text-sm bg-white border border-[var(--portal-border)] text-[var(--portal-green-900)] rounded-md hover:bg-[var(--portal-soft)] font-medium"
+          >
+            Citizen Audit
           </Link>
-        )}
+          {isAdmin && (
+            <Link
+              href="/admin/analytics"
+              className="px-4 py-2 text-sm bg-primary-600 text-white rounded-md hover:bg-primary-700 font-medium"
+            >
+              📊 Full Analytics
+            </Link>
+          )}
+        </div>
       </PageHeader>
 
       {/* ── ADMIN DASHBOARD ─────────────────────────────── */}

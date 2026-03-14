@@ -1,12 +1,28 @@
 const express = require("express");
 const path = require("path");
 const multer = require("multer");
-const { body, param } = require("express-validator");
+const { body, param, query } = require("express-validator");
 
 const { authenticate, authorize, upload, validate } = require("../middleware");
 const CitizenObservationService = require("../services/citizenObservationService");
 
 const router = express.Router();
+
+// Public: list approved/finalized projects for citizen audit discovery
+router.get(
+  "/approved-projects",
+  validate([query("limit").optional().isInt({ min: 1, max: 500 })]),
+  async (req, res, next) => {
+    try {
+      const data = await CitizenObservationService.listApprovedProjects({
+        limit: req.query.limit,
+      });
+      res.json(data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 // Protected: list all observations for scrutiny/admin workflow (includes flagged/removed)
 router.get(

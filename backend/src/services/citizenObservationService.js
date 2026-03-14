@@ -1,4 +1,5 @@
-const { Application, CitizenObservation } = require("../models");
+const { Application, ApplicationCategory, CitizenObservation, Sector, User } = require("../models");
+const { Op } = require("sequelize");
 
 function normalizeTags(input) {
   if (!input) return null;
@@ -40,6 +41,95 @@ function mapObservation(item) {
 }
 
 class CitizenObservationService {
+  static async listApprovedProjects(options = {}) {
+    const requestedLimit = Number(options.limit);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 500)
+      : 250;
+
+    const projects = await Application.findAll({
+      where: {
+        [Op.or]: [
+          { approved_at: { [Op.not]: null } },
+          { status: { [Op.in]: ["referred", "mom_generated", "finalized"] } },
+        ],
+      },
+      attributes: [
+        "id",
+        "reference_number",
+        "project_name",
+        "project_location",
+        "project_district",
+        "project_state",
+        "mineral_type",
+        "status",
+        "submitted_at",
+        "approved_at",
+        "published_at",
+        "updatedAt",
+      ],
+      include: [
+        {
+          model: ApplicationCategory,
+          as: "category",
+          attributes: ["id", "code", "name"],
+          required: false,
+        },
+        {
+          model: Sector,
+          as: "sector",
+          attributes: ["id", "name"],
+          required: false,
+        },
+        {
+          model: User,
+          as: "applicant",
+          attributes: ["id", "name", "organization"],
+          required: false,
+        },
+      ],
+      order: [["approved_at", "DESC"], ["published_at", "DESC"], ["updatedAt", "DESC"]],
+      limit,
+    });
+
+    return {
+      total: projects.length,
+      projects: projects.map((project) => ({
+        id: project.id,
+        reference_number: project.reference_number,
+        project_name: project.project_name,
+        project_location: project.project_location,
+        project_district: project.project_district,
+        project_state: project.project_state,
+        mineral_type: project.mineral_type,
+        status: project.status,
+        submitted_at: project.submitted_at,
+        approved_at: project.approved_at,
+        published_at: project.published_at,
+        applicant: project.applicant
+          ? {
+              id: project.applicant.id,
+              name: project.applicant.name,
+              organization: project.applicant.organization,
+            }
+          : null,
+        category: project.category
+          ? {
+              id: project.category.id,
+              code: project.category.code,
+              name: project.category.name,
+            }
+          : null,
+        sector: project.sector
+          ? {
+              id: project.sector.id,
+              name: project.sector.name,
+            }
+          : null,
+      })),
+    };
+  }
+
   static async getApplicationByReference(referenceNumber) {
     const app = await Application.findOne({
       where: { reference_number: referenceNumber },

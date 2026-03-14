@@ -4,6 +4,7 @@
 // Shows app title, user info, and logout button
 
 import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 import PortalBrandMark from "./PortalBrandMark";
 
 const roleBadgeColor = {
@@ -50,6 +51,12 @@ export default function Navbar({ onToggleSidebar }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+            <Link
+              href="/citizen-audit/projects"
+              className="rounded-xl border border-[var(--portal-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--portal-green-900)] transition hover:bg-[var(--portal-soft)]"
+            >
+              Citizen Audit
+            </Link>
             <span className={`badge ${roleBadgeColor[roleName] || "bg-gray-100 text-gray-700"}`}>
               {roleLabel[roleName] || roleName}
             </span>
