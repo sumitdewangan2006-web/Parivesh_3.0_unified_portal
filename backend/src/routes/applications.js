@@ -141,6 +141,20 @@ router.get(
   }
 );
 
+// ── Get environmental risk analysis ─────────────────────────────────
+router.get(
+  "/:id/risk-analysis",
+  validate([param("id").isUUID()]),
+  async (req, res, next) => {
+    try {
+      const analysis = await ApplicationService.getRiskAnalysis(req.params.id, req.user);
+      res.json(analysis);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // ── Admin: Assign scrutiny officer ───────────────────────────────────
 router.put(
   "/:id/assign-scrutiny",

@@ -7,8 +7,10 @@ import DashboardLayout from "@/components/DashboardLayout";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import MockPaymentGateway from "@/components/MockPaymentGateway";
+import DocumentTypeUploadGrid from "@/components/DocumentTypeUploadGrid";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { sortDocumentsByTypeOrder } from "@/lib/documentTypes";
 
 const STEPS = [
   "Category & Sector",
@@ -42,7 +44,6 @@ function NewApplicationContent() {
 
   // Document upload state
   const [files, setFiles] = useState([]);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   useEffect(() => {
     Promise.all([api.get("/config/categories"), api.get("/config/sectors")])
@@ -77,28 +78,6 @@ function NewApplicationContent() {
       toast.error(err.response?.data?.error || "Save failed");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDocUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !appId) return;
-    setUploadingDoc(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("document_type", "project_report");
-    fd.append("tag", "application_document");
-    try {
-      const { data } = await api.post(`/documents/application/${appId}`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setFiles((prev) => [...prev, data]);
-      toast.success("Document uploaded");
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Upload failed");
-    } finally {
-      setUploadingDoc(false);
-      e.target.value = "";
     }
   };
 
@@ -228,23 +207,14 @@ function NewApplicationContent() {
         {/* Step 3: Documents */}
         {step === 3 && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">Upload project documents (PDF, DOC, DOCX, JPG, PNG — max 10 MB each)</p>
-            <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-md cursor-pointer hover:bg-gray-200 text-sm font-medium transition">
-              {uploadingDoc ? "Uploading…" : "📎 Choose File"}
-              <input type="file" className="hidden"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                onChange={handleDocUpload} disabled={uploadingDoc} />
-            </label>
-            {files.length > 0 && (
-              <ul className="divide-y divide-gray-100 mt-3">
-                {files.map((f) => (
-                  <li key={f.id} className="py-2 text-sm flex justify-between">
-                    <span>{f.original_name}</span>
-                    <span className="text-gray-400">{f.document_type}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <p className="text-sm text-gray-600">Upload documents into dedicated slots so the scrutiny team receives them already sorted by type.</p>
+            <DocumentTypeUploadGrid
+              applicationId={appId}
+              categoryCode={categories.find((c) => String(c.id) === String(form.category_id))?.code}
+              documents={files}
+              canUpload
+              onUploadComplete={(data) => setFiles((prev) => sortDocumentsByTypeOrder([...prev.filter((doc) => doc.document_type !== data.document_type), data]))}
+            />
           </div>
         )}
 
@@ -277,7 +247,7 @@ function NewApplicationContent() {
             applicationId={appId}
             onPaymentSuccess={() => {
               toast.success("Application submitted to Scrutiny Team!");
-              router.push("/proponent/applications");
+              router.push(`/proponent/applications/${appId}`);
             }}
             onCancel={() => setStep(4)}
           />

@@ -11,6 +11,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import DocumentList from "@/components/DocumentList";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { getDocumentTypeDefinitions, sortDocumentsByTypeOrder } from "@/lib/documentTypes";
 
 function ScrutinyDocsContent() {
   const { id } = useParams();
@@ -27,7 +28,7 @@ function ScrutinyDocsContent() {
           api.get(`/documents/application/${id}`),
         ]);
         setApp(appRes.data);
-        setDocuments(docsRes.data);
+        setDocuments(sortDocumentsByTypeOrder(docsRes.data));
       } catch {
         toast.error("Failed to load data");
       } finally {
@@ -40,7 +41,7 @@ function ScrutinyDocsContent() {
   if (loading) return <LoadingSpinner className="py-20" />;
   if (!app) return <p className="text-center py-20 text-gray-500">Application not found</p>;
 
-  // Group by type
+  const definitions = getDocumentTypeDefinitions(app.category?.code);
   const grouped = {};
   documents.forEach((d) => {
     if (!grouped[d.document_type]) grouped[d.document_type] = [];
@@ -70,20 +71,45 @@ function ScrutinyDocsContent() {
         </div>
 
         {/* Grouped by document type */}
-        {Object.entries(grouped).map(([docType, docs]) => (
-          <div key={docType} className="card">
-            <h3 className="font-semibold text-gray-900 mb-2 capitalize">
-              {docType.replace(/_/g, " ")}
-              <span className="ml-2 text-sm font-normal text-gray-500">({docs.length} file{docs.length > 1 ? "s" : ""})</span>
-            </h3>
-            <DocumentList
-              documents={docs}
-              applicationId={id}
-              canDelete={false}
-              showVersions
-            />
-          </div>
-        ))}
+        {definitions.map((definition) => {
+          const docs = grouped[definition.value] || [];
+
+          return (
+            <div key={definition.value} className="card">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900">{definition.label}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{definition.description}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                    definition.required ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {definition.required ? "Required" : "Optional"}
+                  </span>
+                  <p className="text-xs text-gray-400 mt-1">{docs.length} file{docs.length === 1 ? "" : "s"}</p>
+                </div>
+              </div>
+
+              {docs.length > 0 ? (
+                <DocumentList
+                  documents={docs}
+                  applicationId={id}
+                  canDelete={false}
+                  showVersions
+                />
+              ) : (
+                <div className={`rounded-lg border px-4 py-3 text-sm ${
+                  definition.required ? "border-amber-200 bg-amber-50 text-amber-700" : "border-gray-200 bg-gray-50 text-gray-500"
+                }`}>
+                  {definition.required
+                    ? "Required document has not been uploaded yet."
+                    : "No document uploaded for this optional type."}
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         {documents.length === 0 && (
           <div className="card text-center py-10">

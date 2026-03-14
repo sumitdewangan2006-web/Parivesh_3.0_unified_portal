@@ -8,10 +8,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/DashboardLayout";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import DocumentUploader from "@/components/DocumentUploader";
+import DocumentTypeUploadGrid from "@/components/DocumentTypeUploadGrid";
 import DocumentList from "@/components/DocumentList";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { getDocumentTypeDefinitions, sortDocumentsByTypeOrder } from "@/lib/documentTypes";
 
 function DocumentsContent() {
   const { id } = useParams();
@@ -27,7 +28,7 @@ function DocumentsContent() {
         api.get(`/documents/application/${id}`),
       ]);
       setApp(appRes.data);
-      setDocuments(docsRes.data);
+      setDocuments(sortDocumentsByTypeOrder(docsRes.data));
     } catch {
       toast.error("Failed to load data");
     } finally {
@@ -45,7 +46,7 @@ function DocumentsContent() {
           ? { ...d, is_active: false }
           : d
       );
-      return [newDoc, ...updated.filter((d) => d.is_active !== false)];
+      return sortDocumentsByTypeOrder([newDoc, ...updated.filter((d) => d.is_active !== false)]);
     });
   };
 
@@ -70,8 +71,17 @@ function DocumentsContent() {
           {/* Upload Section */}
           {canUpload && (
             <div className="card">
-              <h3 className="font-semibold text-gray-900 mb-3">Upload Document</h3>
-              <DocumentUploader applicationId={id} onUploadComplete={handleUploadComplete} />
+              <h3 className="font-semibold text-gray-900 mb-3">Upload by Document Type</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Upload each document into its dedicated slot so scrutiny reviewers see a clean, predictable structure.
+              </p>
+              <DocumentTypeUploadGrid
+                applicationId={id}
+                categoryCode={app.category?.code}
+                documents={documents}
+                canUpload={canUpload}
+                onUploadComplete={handleUploadComplete}
+              />
             </div>
           )}
 
@@ -125,24 +135,16 @@ function DocumentsContent() {
 
 // ── Document Checklist ───────────────────────────────────────────────
 function DocumentChecklist({ documents, categoryCode }) {
-  const requiredDocs = [
-    { type: "project_report", label: "Project Report", required: true },
-    { type: "eia_report", label: "EIA Report", required: categoryCode === "A" },
-    { type: "environmental_management_plan", label: "Environmental Management Plan", required: categoryCode === "A" },
-    { type: "map_layout", label: "Map / Layout", required: true },
-    { type: "noc_certificate", label: "NOC / Certificate", required: false },
-    { type: "financial_document", label: "Financial Document", required: false },
-    { type: "identity_proof", label: "Identity Proof", required: true },
-  ];
+  const requiredDocs = getDocumentTypeDefinitions(categoryCode).filter((doc) => doc.value !== "additional_document");
 
   const uploadedTypes = new Set(documents.map((d) => d.document_type));
 
   return (
     <ul className="space-y-2">
       {requiredDocs.map((doc) => {
-        const uploaded = uploadedTypes.has(doc.type);
+        const uploaded = uploadedTypes.has(doc.value);
         return (
-          <li key={doc.type} className="flex items-center gap-2 text-sm">
+          <li key={doc.value} className="flex items-center gap-2 text-sm">
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
               uploaded ? "bg-green-100 text-green-600" : doc.required ? "bg-red-100 text-red-500" : "bg-gray-100 text-gray-400"
             }`}>

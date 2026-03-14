@@ -6,27 +6,25 @@
 import { useState, useRef } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-
-const DOCUMENT_TYPES = [
-  { value: "project_report", label: "Project Report" },
-  { value: "eia_report", label: "EIA Report" },
-  { value: "environmental_management_plan", label: "Environmental Management Plan" },
-  { value: "noc_certificate", label: "NOC / Certificate" },
-  { value: "map_layout", label: "Map / Layout" },
-  { value: "financial_document", label: "Financial Document" },
-  { value: "identity_proof", label: "Identity Proof" },
-  { value: "additional_document", label: "Additional Document" },
-];
+import { DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS } from "@/lib/documentTypes";
 
 const ACCEPT = ".pdf,.doc,.docx,.jpg,.jpeg,.png";
 
-export default function DocumentUploader({ applicationId, onUploadComplete, compact = false }) {
-  const [docType, setDocType] = useState("project_report");
+export default function DocumentUploader({
+  applicationId,
+  onUploadComplete,
+  compact = false,
+  fixedDocumentType = null,
+  showTagInput = true,
+  buttonLabel,
+}) {
+  const [docType, setDocType] = useState(fixedDocumentType || "project_report");
   const [tag, setTag] = useState("");
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
+  const activeDocType = fixedDocumentType || docType;
 
   const uploadFile = async (file) => {
     if (!file) return;
@@ -39,8 +37,8 @@ export default function DocumentUploader({ applicationId, onUploadComplete, comp
     setProgress(0);
     const fd = new FormData();
     fd.append("file", file);
-    fd.append("document_type", docType);
-    if (tag) fd.append("tag", tag);
+    fd.append("document_type", activeDocType);
+    if (tag && showTagInput) fd.append("tag", tag);
 
     try {
       const { data } = await api.post(`/documents/application/${applicationId}`, fd, {
@@ -74,12 +72,14 @@ export default function DocumentUploader({ applicationId, onUploadComplete, comp
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <select value={docType} onChange={(e) => setDocType(e.target.value)}
-          className="px-2 py-1.5 border border-gray-300 rounded-md text-xs focus-ring">
-          {DOCUMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
+        {!fixedDocumentType && (
+          <select value={docType} onChange={(e) => setDocType(e.target.value)}
+            className="px-2 py-1.5 border border-gray-300 rounded-md text-xs focus-ring">
+            {DOCUMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        )}
         <label className="px-3 py-1.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 text-xs font-medium cursor-pointer transition inline-flex items-center gap-1">
-          {uploading ? `${progress}%` : "📎 Upload"}
+          {uploading ? `${progress}%` : buttonLabel || `Upload ${DOCUMENT_TYPE_LABELS[activeDocType] || "Document"}`}
           <input ref={inputRef} type="file" className="hidden" accept={ACCEPT}
             onChange={onFileSelect} disabled={uploading} />
         </label>
@@ -89,15 +89,21 @@ export default function DocumentUploader({ applicationId, onUploadComplete, comp
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
-        <select value={docType} onChange={(e) => setDocType(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-ring">
-          {DOCUMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
-        <input type="text" placeholder="Tag (optional)" value={tag}
-          onChange={(e) => setTag(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-ring w-40" />
-      </div>
+      {(!fixedDocumentType || showTagInput) && (
+        <div className="flex flex-wrap gap-3">
+          {!fixedDocumentType && (
+            <select value={docType} onChange={(e) => setDocType(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-ring">
+              {DOCUMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          )}
+          {showTagInput && (
+            <input type="text" placeholder="Tag (optional)" value={tag}
+              onChange={(e) => setTag(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-ring w-40" />
+          )}
+        </div>
+      )}
 
       {/* Drop Zone */}
       <div
@@ -122,7 +128,7 @@ export default function DocumentUploader({ applicationId, onUploadComplete, comp
           <>
             <div className="text-3xl mb-2">📁</div>
             <p className="text-sm text-gray-600">
-              <span className="font-medium text-primary-600">Click to browse</span> or drag & drop a file here
+              <span className="font-medium text-primary-600">Click to browse</span> or drag & drop a {DOCUMENT_TYPE_LABELS[activeDocType] || "file"} here
             </p>
             <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX, JPG, PNG — max 10 MB</p>
           </>

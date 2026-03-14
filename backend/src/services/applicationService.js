@@ -13,6 +13,7 @@ const {
   Payment,
   sequelize,
 } = require("../models");
+const EnvironmentalRiskService = require("./environmentalRiskService");
 
 class ApplicationService {
   // ── Generate unique reference number ─────────────────
@@ -157,7 +158,35 @@ class ApplicationService {
       remarks: "Application submitted for review",
     });
 
-    return ApplicationService.findById(app.id);
+    const result = await ApplicationService.findById(app.id);
+    result.setDataValue(
+      "risk_analysis",
+      await EnvironmentalRiskService.analyzeApplication(app.id)
+    );
+
+    return result;
+  }
+
+  // ── Get environmental risk analysis for an application ───────────
+  static async getRiskAnalysis(applicationId, requester) {
+    const app = await Application.findByPk(applicationId, {
+      attributes: ["id", "applicant_id"],
+    });
+
+    if (!app) {
+      const err = new Error("Application not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const requesterRole = requester?.role?.name;
+    if (requesterRole === "project_proponent" && app.applicant_id !== requester.id) {
+      const err = new Error("Not authorized to view analysis for this application");
+      err.status = 403;
+      throw err;
+    }
+
+    return EnvironmentalRiskService.analyzeApplication(applicationId);
   }
 
   // ── Find by ID with all eager loads ──────────────────

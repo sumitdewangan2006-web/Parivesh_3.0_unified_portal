@@ -467,6 +467,53 @@ BACKEND_INTERNAL_URL=http://backend:5000/api
 
 ---
 
+## AI Environmental Risk Analyzer
+
+When a proposal is submitted, the system runs an environmental risk analysis pipeline.
+
+### What it does
+
+- Parses uploaded PDF documents (for example EIA reports)
+- Summarizes likely environmental impact
+- Detects risk keywords (deforestation, pollution, wildlife impact, groundwater)
+- Generates a risk score and category
+
+### Example Output
+
+Project Risk Score: 72/100 (High)
+
+Reasons:
+- Located within 8km of wildlife sanctuary
+- High groundwater usage
+- Deforestation area > 10 hectares
+
+### Tech Stack (Analyzer)
+
+- Python
+- PDF parsing with `pypdf`
+- LLM summarization with OpenAI API (fallback to extractive summary if API key is not configured)
+
+### Configuration
+
+Set these in [backend/.env.example](backend/.env.example):
+
+```env
+ENABLE_PYTHON_RISK_ANALYZER=true
+PYTHON_RISK_ANALYZER_CMD=python
+PYTHON_RISK_ANALYZER_ARGS=
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-4o-mini
+```
+
+Analyzer files:
+- [backend/ai/risk_analyzer.py](backend/ai/risk_analyzer.py)
+- [backend/ai/requirements.txt](backend/ai/requirements.txt)
+
+API endpoint:
+- `GET /api/applications/:id/risk-analysis`
+
+---
+
 ## License
 
 Built for the **PARIVESH 3.0 Government Hackathon** — Ministry of Environment, Forest and Climate Change (MoEFCC), Government of India.

@@ -3,6 +3,7 @@
 
 const { v4: uuidv4 } = require("uuid");
 const { Payment, Application, StatusHistory } = require("../models");
+const EnvironmentalRiskService = require("./environmentalRiskService");
 
 const CRORE = 1_00_00_000; // 1 Crore = 10,000,000 INR
 
@@ -168,7 +169,12 @@ class PaymentService {
       });
     }
 
-    return payment;
+    const result = payment.toJSON ? payment.toJSON() : { ...payment };
+    if (app && app.status === "submitted") {
+      result.risk_analysis = await EnvironmentalRiskService.analyzeApplication(app.id);
+    }
+
+    return result;
   }
 
   // ── List payments for an application ─────────────────
@@ -234,7 +240,12 @@ class PaymentService {
       });
     }
 
-    return { success: true, status: "completed", transaction_id: payment.transaction_id };
+    const result = { success: true, status: "completed", transaction_id: payment.transaction_id };
+    if (app && app.status === "submitted") {
+      result.risk_analysis = await EnvironmentalRiskService.analyzeApplication(app.id);
+    }
+
+    return result;
   }
 
   // ── List all payments (admin view) ───────────────────

@@ -62,6 +62,16 @@ export default function MockPaymentGateway({ applicationId, onPaymentSuccess, on
         const completed = data.find((p) => p.id === paymentId && p.status === "completed");
         if (completed) {
           clearInterval(pollRef.current);
+
+          try {
+            const { data: risk } = await api.get(`/applications/${applicationId}/risk-analysis`);
+            if (risk?.risk_score !== undefined && risk?.risk_level) {
+              toast.success(`Risk Score: ${risk.risk_score}/100 (${risk.risk_level})`);
+            }
+          } catch {
+            // If risk analysis fails, keep payment success flow uninterrupted.
+          }
+
           setStep("success");
           toast.success("Payment successful! Application submitted.");
           setTimeout(() => onPaymentSuccess?.(), 1800);

@@ -21,10 +21,24 @@ function AppDetailContent() {
   const [app, setApp] = useState(null);
   const [history, setHistory] = useState([]);
   const [remarks, setRemarks] = useState([]);
+  const [risk, setRisk] = useState(null);
+  const [riskLoading, setRiskLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Payment state
   const [showPay, setShowPay] = useState(false);
+
+  const loadRiskAnalysis = async (applicationId) => {
+    setRiskLoading(true);
+    try {
+      const { data } = await api.get(`/applications/${applicationId}/risk-analysis`);
+      setRisk(data);
+    } catch {
+      setRisk(null);
+    } finally {
+      setRiskLoading(false);
+    }
+  };
 
   const load = async () => {
     try {
@@ -40,6 +54,12 @@ function AppDetailContent() {
           const { data } = await api.get(`/scrutiny/applications/${id}/remarks`);
           setRemarks(data);
         } catch { /* proponent may not have access */ }
+      }
+
+      if (appRes.data.status !== "draft") {
+        await loadRiskAnalysis(id);
+      } else {
+        setRisk(null);
       }
     } catch {
       toast.error("Failed to load application");
@@ -154,6 +174,105 @@ function AppDetailContent() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          <div className="card">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-900">AI Environmental Risk Analyzer</h3>
+              <button
+                onClick={() => loadRiskAnalysis(id)}
+                disabled={riskLoading}
+                className="text-xs px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              >
+                {riskLoading ? "Analyzing..." : "Run Analysis"}
+              </button>
+            </div>
+
+            {riskLoading && <p className="text-sm text-gray-500">Analyzing project risk signals...</p>}
+
+            {!riskLoading && risk && (
+              <div className="space-y-3">
+                <div className={`rounded-lg border p-3 ${
+                  risk.risk_level === "High"
+                    ? "bg-red-50 border-red-200"
+                    : risk.risk_level === "Medium"
+                    ? "bg-amber-50 border-amber-200"
+                    : "bg-green-50 border-green-200"
+                }`}>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Project Risk Score</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {risk.risk_score}/100
+                    <span className="text-sm font-semibold ml-2">({risk.risk_level})</span>
+                  </p>
+                </div>
+
+                {risk.summary && (
+                  <p className="text-sm text-gray-700">{risk.summary}</p>
+                )}
+
+                {Array.isArray(risk.reasons) && risk.reasons.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Reasons</p>
+                    <ul className="space-y-1">
+                      {risk.reasons.slice(0, 4).map((reason, idx) => (
+                        <li key={idx} className="text-sm text-gray-700">• {reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {Array.isArray(risk.keyword_hits) && risk.keyword_hits.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Detected Risk Keywords</p>
+                    <div className="flex flex-wrap gap-1">
+                      {risk.keyword_hits.map((hit) => (
+                        <span key={hit.keyword} className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                          {hit.keyword} ({hit.count})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {risk.extracted_metrics && Object.values(risk.extracted_metrics).some((value) => value !== null && value !== false) && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Extracted Metrics</p>
+                    <dl className="grid grid-cols-1 gap-1 text-sm text-gray-700">
+                      {risk.extracted_metrics.wildlife_distance_km !== null && risk.extracted_metrics.wildlife_distance_km !== undefined && (
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-gray-500">Wildlife distance</dt>
+                          <dd>{risk.extracted_metrics.wildlife_distance_km} km</dd>
+                        </div>
+                      )}
+                      {risk.extracted_metrics.groundwater_usage_kld !== null && risk.extracted_metrics.groundwater_usage_kld !== undefined && (
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-gray-500">Groundwater usage</dt>
+                          <dd>{risk.extracted_metrics.groundwater_usage_kld} KLD</dd>
+                        </div>
+                      )}
+                      {risk.extracted_metrics.deforestation_area_ha !== null && risk.extracted_metrics.deforestation_area_ha !== undefined && (
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-gray-500">Deforestation area</dt>
+                          <dd>{risk.extracted_metrics.deforestation_area_ha} ha</dd>
+                        </div>
+                      )}
+                      {risk.extracted_metrics.pdf_text_extracted && (
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-gray-500">PDF text parsed</dt>
+                          <dd>Yes</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!riskLoading && !risk && (
+              <p className="text-sm text-gray-500">
+                Risk analysis will appear after proposal submission and can also be generated on demand.
+              </p>
+            )}
+          </div>
+
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-3">Status History</h3>
             {history.length === 0 ? <p className="text-sm text-gray-500">No history yet</p> : (

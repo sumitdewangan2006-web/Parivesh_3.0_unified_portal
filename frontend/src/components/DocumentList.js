@@ -7,6 +7,7 @@ import { useState } from "react";
 import Cookies from "js-cookie";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { DOCUMENT_TYPE_LABELS } from "@/lib/documentTypes";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -18,17 +19,6 @@ function getToken() {
 function downloadUrl(docId) {
   return `${API_BASE}/documents/${docId}/download?token=${encodeURIComponent(getToken())}`;
 }
-
-const typeLabels = {
-  project_report: "Project Report",
-  eia_report: "EIA Report",
-  environmental_management_plan: "Env. Mgmt Plan",
-  noc_certificate: "NOC / Certificate",
-  map_layout: "Map / Layout",
-  financial_document: "Financial Doc",
-  identity_proof: "Identity Proof",
-  additional_document: "Additional Doc",
-};
 
 const fileIcon = (mime) => {
   if (!mime) return "📄";
@@ -108,7 +98,7 @@ export default function DocumentList({
                 </span>
               </div>
               <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400">
-                <span>{typeLabels[doc.document_type] || doc.document_type}</span>
+                <span>{DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}</span>
                 {doc.tag && <span>• {doc.tag}</span>}
                 <span>• {formatSize(doc.file_size)}</span>
                 {doc.uploader && <span>• {doc.uploader.name}</span>}
@@ -142,7 +132,7 @@ export default function DocumentList({
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 max-h-[70vh] flex flex-col">
             <h3 className="text-lg font-semibold mb-1">Version History</h3>
             <p className="text-sm text-gray-500 mb-4">
-              {typeLabels[versionModal.docType] || versionModal.docType}
+              {DOCUMENT_TYPE_LABELS[versionModal.docType] || versionModal.docType}
             </p>
             <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
               {versionModal.versions.map((v) => (
