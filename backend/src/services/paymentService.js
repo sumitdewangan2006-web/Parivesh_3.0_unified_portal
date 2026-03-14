@@ -179,6 +179,64 @@ class PaymentService {
     });
   }
 
+  // ── Get public payment details (no auth — for mobile scanner page) ───
+  static async getPublicDetails(paymentId) {
+    const payment = await Payment.findByPk(paymentId);
+    if (!payment) {
+      const err = new Error("Payment not found");
+      err.status = 404;
+      throw err;
+    }
+    const app = await Application.findByPk(payment.application_id);
+    return {
+      payment_id: payment.id,
+      amount: payment.amount,
+      currency: payment.currency,
+      status: payment.status,
+      reference_number: app?.reference_number,
+    };
+  }
+
+  // ── Confirm payment from mobile page (no auth) ────────────────────────
+  static async confirmPublic(paymentId) {
+    const payment = await Payment.findByPk(paymentId);
+    if (!payment) {
+      const err = new Error("Payment not found");
+      err.status = 404;
+      throw err;
+    }
+    // Idempotent — already completed is fine
+    if (payment.status === "completed") {
+      return { success: true, status: "completed", transaction_id: payment.transaction_id };
+    }
+    if (payment.status !== "pending") {
+      const err = new Error("Payment is not in a payable state");
+      err.status = 400;
+      throw err;
+    }
+
+    payment.status = "completed";
+    payment.transaction_id = `TXN-${uuidv4().substring(0, 12).toUpperCase()}`;
+    payment.paid_at = new Date();
+    await payment.save();
+
+    const app = await Application.findByPk(payment.application_id);
+    if (app && app.status === "draft") {
+      app.status = "submitted";
+      app.submitted_at = new Date();
+      await app.save();
+      await StatusHistory.create({
+        application_id: app.id,
+        changed_by: payment.user_id,
+        from_status: "draft",
+        to_status: "submitted",
+        remarks: `Payment completed via UPI QR scan, application submitted — TXN: ${payment.transaction_id}`,
+      });
+    }
+
+    return { success: true, status: "completed", transaction_id: payment.transaction_id };
+  }
+
   // ── List all payments (admin view) ───────────────────
   static async listAll({ page = 1, limit = 20, status }) {
     const where = {};

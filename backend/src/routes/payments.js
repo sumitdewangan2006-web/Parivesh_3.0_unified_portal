@@ -8,6 +8,29 @@ const PaymentService = require("../services/paymentService");
 
 const router = express.Router();
 
+// ── Public endpoints (no auth — mobile QR scanner flow) ───────────────
+// These must be registered BEFORE router.use(authenticate)
+
+// Get payment details for display on mobile pay page
+router.get("/public/:id", async (req, res, next) => {
+  try {
+    const result = await PaymentService.getPublicDetails(req.params.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Confirm payment from mobile pay page (mock UPI tap-to-pay)
+router.post("/public/:id/pay", async (req, res, next) => {
+  try {
+    const result = await PaymentService.confirmPublic(req.params.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.use(authenticate);
 
 // ── Calculate fee for an application ─────────────────────────────────

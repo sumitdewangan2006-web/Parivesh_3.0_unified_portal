@@ -31,7 +31,8 @@ app.use(
 );
 app.use(
   cors({
-    origin: config.corsOrigin,
+    // Reflect any requesting origin so the app works from phones on LAN IPs
+    origin: (origin, callback) => callback(null, true),
     credentials: true,
   })
 );

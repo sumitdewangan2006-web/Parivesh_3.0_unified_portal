@@ -55,6 +55,8 @@ services:
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:5000/api
+      # Internal Docker network URL used by the Next.js proxy API routes
+      BACKEND_INTERNAL_URL: http://backend:5000/api
     ports:
       - "3000:3000"
     depends_on:
