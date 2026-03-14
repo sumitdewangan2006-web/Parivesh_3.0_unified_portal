@@ -68,6 +68,7 @@ function ScrutinyDocsContent() {
             <h3 className="font-semibold text-gray-900">All Documents ({documents.length})</h3>
             <span className="text-sm text-gray-500">{Object.keys(grouped).length} document types</span>
           </div>
+          <p className="text-xs text-gray-500 mt-2">Use the 👁️ Preview action to review documents online without downloading.</p>
         </div>
 
         {/* Grouped by document type */}

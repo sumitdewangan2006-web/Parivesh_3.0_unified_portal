@@ -20,6 +20,10 @@ function downloadUrl(docId) {
   return `${API_BASE}/documents/${docId}/download?token=${encodeURIComponent(getToken())}`;
 }
 
+function previewUrl(docId) {
+  return `${API_BASE}/documents/${docId}/preview?token=${encodeURIComponent(getToken())}`;
+}
+
 const fileIcon = (mime) => {
   if (!mime) return "📄";
   if (mime.includes("pdf")) return "📕";
@@ -43,8 +47,18 @@ export default function DocumentList({
   showVersions = true,
 }) {
   const [versionModal, setVersionModal] = useState(null); // { docType, versions }
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null); // { url, mimeType, originalName }
   const [loadingVersions, setLoadingVersions] = useState(false);
+
+  const canIframePreview = (mimeType) => {
+    if (!mimeType) return false;
+    return (
+      mimeType.includes("pdf") ||
+      mimeType.includes("image") ||
+      mimeType.startsWith("text/") ||
+      mimeType.includes("html")
+    );
+  };
 
   const handleDelete = async (docId, docName) => {
     if (!confirm(`Delete "${docName}"? This cannot be undone.`)) return;
@@ -70,11 +84,11 @@ export default function DocumentList({
   };
 
   const openPreview = (doc) => {
-    if (doc.mime_type?.includes("image") || doc.mime_type?.includes("pdf")) {
-      setPreviewUrl(downloadUrl(doc.id));
-    } else {
-      window.open(downloadUrl(doc.id), "_blank");
-    }
+    setPreviewDoc({
+      url: previewUrl(doc.id),
+      mimeType: doc.mime_type,
+      originalName: doc.original_name,
+    });
   };
 
   if (documents.length === 0) {
@@ -105,7 +119,10 @@ export default function DocumentList({
                 <span>• {new Date(doc.createdAt).toLocaleDateString("en-IN")}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
+            <div className="flex items-center gap-1 opacity-100 transition shrink-0">
+              <button onClick={() => openPreview(doc)}
+                className="text-xs px-2 py-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                title="Preview Online">👁️</button>
               {showVersions && (
                 <button onClick={() => showVersionHistory(doc.document_type)}
                   disabled={loadingVersions}
@@ -163,23 +180,32 @@ export default function DocumentList({
       )}
 
       {/* Preview Modal */}
-      {previewUrl && (
+      {previewDoc && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-          onClick={() => setPreviewUrl(null)}>
+          onClick={() => setPreviewDoc(null)}>
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-3 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-700">Document Preview</h3>
+              <h3 className="text-sm font-semibold text-gray-700 truncate">Preview: {previewDoc.originalName}</h3>
               <div className="flex items-center gap-2">
-                <a href={previewUrl} target="_blank" rel="noopener noreferrer"
+                <a href={previewDoc.url} target="_blank" rel="noopener noreferrer"
                   className="text-xs text-primary-600 hover:underline">Open in new tab</a>
-                <button onClick={() => setPreviewUrl(null)}
+                <button onClick={() => setPreviewDoc(null)}
                   className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
               </div>
             </div>
             <div className="flex-1 p-1">
-              <iframe src={previewUrl} className="w-full h-full rounded border border-gray-100"
-                title="Document Preview" />
+              {canIframePreview(previewDoc.mimeType) ? (
+                <iframe src={previewDoc.url} className="w-full h-full rounded border border-gray-100"
+                  title="Document Preview" />
+              ) : (
+                <div className="w-full h-full rounded border border-gray-100 flex items-center justify-center bg-gray-50 p-6 text-center">
+                  <div>
+                    <p className="text-sm text-gray-700 font-medium">Inline preview is limited for this file type.</p>
+                    <p className="text-xs text-gray-500 mt-1">Use "Open in new tab" to view using browser-supported plugins.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

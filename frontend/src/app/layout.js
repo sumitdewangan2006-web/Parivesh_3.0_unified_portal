@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PortalUiProvider } from "@/contexts/PortalUiContext";
 import PortalFooter from "@/components/PortalFooter";
+import PariveshAssistant from "@/components/PariveshAssistant";
 
 export const metadata = {
   title: "PARIVESH 3.0 — Unified Environmental Clearance Portal",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
               {children}
               <PortalFooter />
             </div>
+            <PariveshAssistant />
             <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
           </AuthProvider>
         </PortalUiProvider>
@@ -28,3 +30,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+

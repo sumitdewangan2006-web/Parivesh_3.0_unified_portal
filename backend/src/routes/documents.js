@@ -79,6 +79,23 @@ router.get(
   }
 );
 
+// ── Inline preview a document (no forced download) ───────────────────
+router.get(
+  "/:id/preview",
+  validate([param("id").isUUID()]),
+  async (req, res, next) => {
+    try {
+      const doc = await DocumentService.findById(req.params.id);
+      const absolutePath = path.resolve(doc.file_path);
+      res.setHeader("Content-Type", doc.mime_type || "application/octet-stream");
+      res.setHeader("Content-Disposition", `inline; filename="${doc.original_name}"`);
+      res.sendFile(absolutePath);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // ── Version history ──────────────────────────────────────────────────
 router.get(
   "/application/:applicationId/versions/:documentType",
